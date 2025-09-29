@@ -69,6 +69,18 @@ base_url = "https://api.mistral.ai/v1"
 env_key = "MISTRAL_API_KEY"
 ```
 
+Or xAI's API endpoint:
+
+```toml
+[model_providers.api_x]
+name = "xAI"
+base_url = "https://api.x.ai/v1"
+env_key = "XAI_API_KEY"
+wire_api = "chat"
+request_max_retries = 4
+stream_max_retries = 10
+```
+
 It is also possible to configure a provider to include extra HTTP headers with a request. These can be hardcoded values (`http_headers`) or values read from environment variables (`env_http_headers`):
 
 ```toml

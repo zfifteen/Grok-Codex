@@ -448,6 +448,35 @@ env_http_headers = { "X-Example-Env-Header" = "EXAMPLE_ENV_VAR" }
     }
 
     #[test]
+    fn test_deserialize_xai_model_provider_toml() {
+        let xai_provider_toml = r#"
+name = "xAI"
+base_url = "https://api.x.ai/v1"
+env_key = "XAI_API_KEY"
+wire_api = "chat"
+request_max_retries = 4
+stream_max_retries = 10
+        "#;
+        let expected_provider = ModelProviderInfo {
+            name: "xAI".into(),
+            base_url: Some("https://api.x.ai/v1".into()),
+            env_key: Some("XAI_API_KEY".into()),
+            env_key_instructions: None,
+            wire_api: WireApi::Chat,
+            query_params: None,
+            http_headers: None,
+            env_http_headers: None,
+            request_max_retries: Some(4),
+            stream_max_retries: Some(10),
+            stream_idle_timeout_ms: None,
+            requires_openai_auth: false,
+        };
+
+        let provider: ModelProviderInfo = toml::from_str(xai_provider_toml).unwrap();
+        assert_eq!(expected_provider, provider);
+    }
+
+    #[test]
     fn detects_azure_responses_base_urls() {
         fn provider_for(base_url: &str) -> ModelProviderInfo {
             ModelProviderInfo {
