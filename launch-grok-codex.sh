@@ -223,6 +223,9 @@ setup_api_keys() {
     echo "   echo 'export XAI_API_KEY=\"your-key-here\"' >> ~/.bashrc"
     echo "   echo 'export XAI_API_KEY=\"your-key-here\"' >> ~/.zshrc"
     echo
+    echo -e "${CYAN}💡 Or create a .env file in the project root:${NC}"
+    echo "   echo 'XAI_API_KEY=your-key-here' > .env"
+    echo
 }
 
 # Build the codex binary
@@ -281,6 +284,14 @@ main() {
     local check_keys=false
     local list_keys=false
     local codex_args=()
+    
+    # Load .env file if it exists (for convenience)
+    if [[ -f "$SCRIPT_DIR/.env" ]]; then
+        echo -e "${BLUE}📄 Loading environment from .env file...${NC}"
+        set -a  # automatically export all variables
+        source "$SCRIPT_DIR/.env"
+        set +a
+    fi
     
     # Parse arguments - simple approach
     # If --help is the ONLY argument, show launcher help
