@@ -38,9 +38,9 @@ use toml_edit::DocumentMut;
 use toml_edit::Item as TomlItem;
 use toml_edit::Table as TomlTable;
 
-const OPENAI_DEFAULT_MODEL: &str = "gpt-5-codex";
-const OPENAI_DEFAULT_REVIEW_MODEL: &str = "gpt-5-codex";
-pub const GPT_5_CODEX_MEDIUM_MODEL: &str = "gpt-5-codex";
+const XAI_DEFAULT_MODEL: &str = "grok-code-fast-1";
+const XAI_DEFAULT_REVIEW_MODEL: &str = "grok-2-1212";
+pub const GROK_CODE_FAST_MEDIUM_MODEL: &str = "grok-code-fast-1";
 
 /// Maximum number of bytes of the documentation that will be embedded. Larger
 /// files are *silently truncated* to this size so we do not take up too much of
@@ -918,7 +918,7 @@ impl Config {
         let model_provider_id = model_provider
             .or(config_profile.model_provider)
             .or(cfg.model_provider)
-            .unwrap_or_else(|| "openai".to_string());
+            .unwrap_or_else(|| "api_x".to_string());
         let model_provider = model_providers
             .get(&model_provider_id)
             .ok_or_else(|| {
@@ -1133,11 +1133,11 @@ impl Config {
 }
 
 fn default_model() -> String {
-    OPENAI_DEFAULT_MODEL.to_string()
+    XAI_DEFAULT_MODEL.to_string()
 }
 
 fn default_review_model() -> String {
-    OPENAI_DEFAULT_REVIEW_MODEL.to_string()
+    XAI_DEFAULT_REVIEW_MODEL.to_string()
 }
 
 /// Returns the path to the Codex configuration directory, which can be
@@ -1751,7 +1751,7 @@ model_verbosity = "high"
     ///    (or in the config file itself)
     /// 3. as an entry in `config.toml`, e.g. `model = "o3"`
     /// 4. the default value for a required field defined in code, e.g.,
-    ///    `crate::flags::OPENAI_DEFAULT_MODEL`
+    ///    `crate::flags::XAI_DEFAULT_MODEL`
     ///
     /// Note that profiles are the recommended way to specify a group of
     /// configuration options together.
@@ -1772,7 +1772,7 @@ model_verbosity = "high"
         assert_eq!(
             Config {
                 model: "o3".to_string(),
-                review_model: OPENAI_DEFAULT_REVIEW_MODEL.to_string(),
+                review_model: XAI_DEFAULT_REVIEW_MODEL.to_string(),
                 model_family: find_family_for_model("o3").expect("known model slug"),
                 model_context_window: Some(200_000),
                 model_max_output_tokens: Some(100_000),
@@ -1831,7 +1831,7 @@ model_verbosity = "high"
         )?;
         let expected_gpt3_profile_config = Config {
             model: "gpt-3.5-turbo".to_string(),
-            review_model: OPENAI_DEFAULT_REVIEW_MODEL.to_string(),
+            review_model: XAI_DEFAULT_REVIEW_MODEL.to_string(),
             model_family: find_family_for_model("gpt-3.5-turbo").expect("known model slug"),
             model_context_window: Some(16_385),
             model_max_output_tokens: Some(4_096),
@@ -1905,7 +1905,7 @@ model_verbosity = "high"
         )?;
         let expected_zdr_profile_config = Config {
             model: "o3".to_string(),
-            review_model: OPENAI_DEFAULT_REVIEW_MODEL.to_string(),
+            review_model: XAI_DEFAULT_REVIEW_MODEL.to_string(),
             model_family: find_family_for_model("o3").expect("known model slug"),
             model_context_window: Some(200_000),
             model_max_output_tokens: Some(100_000),
@@ -1965,7 +1965,7 @@ model_verbosity = "high"
         )?;
         let expected_gpt5_profile_config = Config {
             model: "gpt-5".to_string(),
-            review_model: OPENAI_DEFAULT_REVIEW_MODEL.to_string(),
+            review_model: XAI_DEFAULT_REVIEW_MODEL.to_string(),
             model_family: find_family_for_model("gpt-5").expect("known model slug"),
             model_context_window: Some(272_000),
             model_max_output_tokens: Some(128_000),

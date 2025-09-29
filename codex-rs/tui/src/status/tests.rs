@@ -64,7 +64,7 @@ fn sanitize_directory(lines: Vec<String>) -> Vec<String> {
 fn status_snapshot_includes_reasoning_details() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home);
-    config.model = "gpt-5-codex".to_string();
+    config.model = "grok-code-fast-1".to_string();
     config.model_provider_id = "openai".to_string();
     config.model_reasoning_effort = Some(ReasoningEffort::High);
     config.model_reasoning_summary = ReasoningSummary::Detailed;
@@ -118,7 +118,7 @@ fn status_snapshot_includes_reasoning_details() {
 fn status_snapshot_includes_monthly_limit() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home);
-    config.model = "gpt-5-codex".to_string();
+    config.model = "grok-code-fast-1".to_string();
     config.model_provider_id = "openai".to_string();
     config.cwd = PathBuf::from("/workspace/tests");
 
@@ -159,7 +159,7 @@ fn status_snapshot_includes_monthly_limit() {
 fn status_card_token_usage_excludes_cached_tokens() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home);
-    config.model = "gpt-5-codex".to_string();
+    config.model = "grok-code-fast-1".to_string();
     config.cwd = PathBuf::from("/workspace/tests");
 
     let usage = TokenUsage {
@@ -183,7 +183,7 @@ fn status_card_token_usage_excludes_cached_tokens() {
 fn status_snapshot_truncates_in_narrow_terminal() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home);
-    config.model = "gpt-5-codex".to_string();
+    config.model = "grok-code-fast-1".to_string();
     config.model_provider_id = "openai".to_string();
     config.model_reasoning_effort = Some(ReasoningEffort::High);
     config.model_reasoning_summary = ReasoningSummary::Detailed;
@@ -227,7 +227,7 @@ fn status_snapshot_truncates_in_narrow_terminal() {
 fn status_snapshot_shows_missing_limits_message() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home);
-    config.model = "gpt-5-codex".to_string();
+    config.model = "grok-code-fast-1".to_string();
     config.cwd = PathBuf::from("/workspace/tests");
 
     let usage = TokenUsage {
@@ -253,7 +253,7 @@ fn status_snapshot_shows_missing_limits_message() {
 fn status_snapshot_shows_empty_limits_message() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home);
-    config.model = "gpt-5-codex".to_string();
+    config.model = "grok-code-fast-1".to_string();
     config.cwd = PathBuf::from("/workspace/tests");
 
     let usage = TokenUsage {

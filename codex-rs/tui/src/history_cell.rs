@@ -1382,7 +1382,7 @@ mod tests {
     #[test]
     fn session_header_includes_reasoning_level_when_present() {
         let cell = SessionHeaderHistoryCell::new(
-            "gpt-4o".to_string(),
+            "grok-2-1212".to_string(),
             Some(ReasoningEffortConfig::High),
             std::env::temp_dir(),
             "test",
@@ -1394,7 +1394,7 @@ mod tests {
             .find(|line| line.contains("model:"))
             .expect("model line");
 
-        assert!(model_line.contains("gpt-4o high"));
+        assert!(model_line.contains("grok-2-1212 high"));
         assert!(model_line.contains("/model to change"));
     }
 
