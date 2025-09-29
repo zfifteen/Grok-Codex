@@ -1,3 +1,12 @@
-model = "gpt-5"
+model = "grok-code-fast-1"
+model_provider = "api_x"
+
+[model_providers.api_x]
+name = "xAI"
+base_url = "https://api.x.ai/v1"
+env_key = "XAI_API_KEY"
+wire_api = "chat"
+request_max_retries = 4
+stream_max_retries = 10
 
 # Consider setting [mcp_servers] here!

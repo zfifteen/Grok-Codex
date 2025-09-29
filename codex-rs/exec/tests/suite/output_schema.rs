@@ -41,7 +41,7 @@ async fn exec_includes_output_schema_in_request() -> anyhow::Result<()> {
         .arg("--output-schema")
         .arg(&schema_path)
         .arg("-m")
-        .arg("gpt-5")
+        .arg("grok-code-fast-1")
         .arg("tell me a joke")
         .assert()
         .success();

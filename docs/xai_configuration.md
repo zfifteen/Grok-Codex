@@ -85,12 +85,12 @@ You can test your xAI configuration using the provided test scripts:
 
 ### Python Test Script
 ```bash
-python3 /tmp/test_xai_api.py
+python3 scripts/test_xai_api.py
 ```
 
 ### Curl Test Script
 ```bash
-bash /tmp/test_xai_curl.sh
+bash scripts/test_xai_curl.sh
 ```
 
 These scripts will verify:

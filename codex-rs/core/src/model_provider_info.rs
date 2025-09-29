@@ -255,11 +255,27 @@ pub const BUILT_IN_OSS_MODEL_PROVIDER_ID: &str = "oss";
 pub fn built_in_model_providers() -> HashMap<String, ModelProviderInfo> {
     use ModelProviderInfo as P;
 
-    // We do not want to be in the business of adjucating which third-party
-    // providers are bundled with Codex CLI, so we only include the OpenAI and
-    // open source ("oss") providers by default. Users are encouraged to add to
-    // `model_providers` in config.toml to add their own providers.
+    // We include xAI, OpenAI, and open source providers by default.
+    // Users are encouraged to add to `model_providers` in config.toml
+    // to add their own providers.
     [
+        (
+            "api_x",
+            P {
+                name: "xAI".into(),
+                base_url: Some("https://api.x.ai/v1".into()),
+                env_key: Some("XAI_API_KEY".into()),
+                env_key_instructions: None,
+                wire_api: WireApi::Chat,
+                query_params: None,
+                http_headers: None,
+                env_http_headers: None,
+                request_max_retries: Some(4),
+                stream_max_retries: Some(10),
+                stream_idle_timeout_ms: None,
+                requires_openai_auth: false,
+            },
+        ),
         (
             "openai",
             P {

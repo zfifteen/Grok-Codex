@@ -212,7 +212,7 @@ fn exec_resume_preserves_cli_configuration_overrides() -> anyhow::Result<()> {
         .arg("--sandbox")
         .arg("workspace-write")
         .arg("--model")
-        .arg("gpt-5")
+        .arg("grok-code-fast-1")
         .arg("-C")
         .arg(env!("CARGO_MANIFEST_DIR"))
         .arg(&prompt)
@@ -236,7 +236,7 @@ fn exec_resume_preserves_cli_configuration_overrides() -> anyhow::Result<()> {
         .arg("--sandbox")
         .arg("workspace-write")
         .arg("--model")
-        .arg("gpt-5-high")
+        .arg("grok-code-fast-1-high")
         .arg("-C")
         .arg(env!("CARGO_MANIFEST_DIR"))
         .arg(&prompt2)
@@ -249,7 +249,7 @@ fn exec_resume_preserves_cli_configuration_overrides() -> anyhow::Result<()> {
 
     let stdout = String::from_utf8(output.stdout)?;
     assert!(
-        stdout.contains("model: gpt-5-high"),
+        stdout.contains("model: grok-code-fast-1-high"),
         "stdout missing model override: {stdout}"
     );
     assert!(
