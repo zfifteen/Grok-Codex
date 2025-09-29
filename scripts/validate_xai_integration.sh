@@ -7,6 +7,32 @@ set -e
 echo "🚀 xAI Integration Validation Script"
 echo "======================================"
 
+# Function to find cargo executable
+find_cargo() {
+    # Check if cargo is in PATH
+    if command -v cargo &> /dev/null; then
+        echo "cargo"
+        return
+    fi
+    
+    # Check common installation locations
+    if [ -f "$HOME/.cargo/bin/cargo" ]; then
+        echo "$HOME/.cargo/bin/cargo"
+        return
+    fi
+    
+    # Check if rustup is available and can provide cargo
+    if command -v rustup &> /dev/null; then
+        local cargo_path=$(rustup which cargo 2>/dev/null || true)
+        if [ -n "$cargo_path" ] && [ -f "$cargo_path" ]; then
+            echo "$cargo_path"
+            return
+        fi
+    fi
+    
+    echo ""
+}
+
 # Check prerequisites
 echo "📋 Checking prerequisites..."
 
@@ -28,6 +54,14 @@ fi
 
 if ! command -v jq &> /dev/null; then
     echo "⚠️  jq not found - JSON output will not be formatted"
+fi
+
+# Check for cargo availability
+CARGO_CMD=$(find_cargo)
+if [ -z "$CARGO_CMD" ]; then
+    echo "❌ cargo not found"
+    echo "   Please install Rust and cargo: https://rustup.rs/"
+    exit 1
 fi
 
 echo "✅ Prerequisites check passed"
@@ -53,7 +87,7 @@ echo "-----------------------------------"
 cd ../codex-rs
 
 # Run the specific xAI configuration test
-if cargo test -p codex-core test_deserialize_xai_model_provider_toml --quiet; then
+if "$CARGO_CMD" test -p codex-core test_deserialize_xai_model_provider_toml --quiet; then
     echo "✅ xAI TOML configuration test passed"
 else
     echo "❌ xAI TOML configuration test failed"
