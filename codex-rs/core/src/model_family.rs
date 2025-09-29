@@ -112,6 +112,11 @@ pub fn find_family_for_model(slug: &str) -> Option<ModelFamily> {
             supports_reasoning_summaries: true,
             needs_special_apply_patch_instructions: true,
         )
+    } else if slug.starts_with("grok-") {
+        model_family!(
+            slug, "grok",
+            apply_patch_tool_type: Some(ApplyPatchToolType::Function)
+        )
     } else {
         None
     }
