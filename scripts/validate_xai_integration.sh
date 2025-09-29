@@ -37,7 +37,7 @@ echo
 echo "🧪 Testing xAI API Compatibility..."
 echo "-----------------------------------"
 
-if python3 scripts/test_xai_api.py; then
+if python3 test_xai_api.py; then
     echo "✅ Python API tests passed"
 else
     echo "❌ Python API tests failed"
@@ -50,7 +50,7 @@ echo
 echo "🔧 Testing Configuration Parsing..."
 echo "-----------------------------------"
 
-cd codex-rs
+cd ../codex-rs
 
 # Run the specific xAI configuration test
 if cargo test -p codex-core test_deserialize_xai_model_provider_toml --quiet; then
