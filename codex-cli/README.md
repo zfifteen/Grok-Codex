@@ -36,8 +36,6 @@
   - [Custom instructions](#custom-instructions)
   - [Environment variables setup](#environment-variables-setup)
 - [FAQ](#faq)
-- [Zero data retention (ZDR) usage](#zero-data-retention-zdr-usage)
-- [Codex open source fund](#codex-open-source-fund)
 - [Contributing](#contributing)
   - [Development workflow](#development-workflow)
   - [Git hooks with Husky](#git-hooks-with-husky)
@@ -516,29 +514,6 @@ Codex runs model-generated commands in a sandbox. If a proposed command or file 
 Not directly. It requires [Windows Subsystem for Linux (WSL2)](https://learn.microsoft.com/en-us/windows/wsl/install) - Codex has been tested on macOS and Linux with Node 22.
 
 </details>
-
----
-
-## Zero data retention (ZDR) usage
-
-Codex CLI **does** support OpenAI organizations with [Zero Data Retention (ZDR)](https://platform.openai.com/docs/guides/your-data#zero-data-retention) enabled. If your OpenAI organization has Zero Data Retention enabled and you still encounter errors such as:
-
-```
-OpenAI rejected the request. Error details: Status: 400, Code: unsupported_parameter, Type: invalid_request_error, Message: 400 Previous response cannot be used for this organization due to Zero Data Retention.
-```
-
-You may need to upgrade to a more recent version with: `npm i -g @openai/codex@latest`
-
----
-
-## Codex open source fund
-
-We're excited to launch a **$1 million initiative** supporting open source projects that use Codex CLI and other OpenAI models.
-
-- Grants are awarded up to **$25,000** API credits.
-- Applications are reviewed **on a rolling basis**.
-
-**Interested? [Apply here](https://openai.com/form/codex-open-source-fund/).**
 
 ---
 

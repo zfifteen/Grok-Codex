@@ -1679,7 +1679,7 @@ model_reasoning_summary = "detailed"
 model = "gpt-3.5-turbo"
 model_provider = "openai-chat-completions"
 
-[profiles.zdr]
+[profiles.alt_profile]
 model = "o3"
 model_provider = "openai"
 approval_policy = "on-failure"
@@ -1890,20 +1890,20 @@ model_verbosity = "high"
     }
 
     #[test]
-    fn test_precedence_fixture_with_zdr_profile() -> std::io::Result<()> {
+    fn test_precedence_fixture_with_alt_profile() -> std::io::Result<()> {
         let fixture = create_test_fixture()?;
 
-        let zdr_profile_overrides = ConfigOverrides {
-            config_profile: Some("zdr".to_string()),
+        let alt_profile_overrides = ConfigOverrides {
+            config_profile: Some("alt_profile".to_string()),
             cwd: Some(fixture.cwd()),
             ..Default::default()
         };
-        let zdr_profile_config = Config::load_from_base_config_with_overrides(
+        let alt_profile_config = Config::load_from_base_config_with_overrides(
             fixture.cfg.clone(),
-            zdr_profile_overrides,
+            alt_profile_overrides,
             fixture.codex_home(),
         )?;
-        let expected_zdr_profile_config = Config {
+        let expected_alt_profile_config = Config {
             model: "o3".to_string(),
             review_model: XAI_DEFAULT_REVIEW_MODEL.to_string(),
             model_family: find_family_for_model("o3").expect("known model slug"),
@@ -1939,12 +1939,12 @@ model_verbosity = "high"
             use_experimental_unified_exec_tool: false,
             use_experimental_use_rmcp_client: false,
             include_view_image_tool: true,
-            active_profile: Some("zdr".to_string()),
+            active_profile: Some("alt_profile".to_string()),
             disable_paste_burst: false,
             tui_notifications: Default::default(),
         };
 
-        assert_eq!(expected_zdr_profile_config, zdr_profile_config);
+        assert_eq!(expected_alt_profile_config, alt_profile_config);
 
         Ok(())
     }
