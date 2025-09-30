@@ -16,8 +16,8 @@ The GitHub Release also contains a [DotSlash](https://dotslash-cli.com/) file fo
 
 ```bash
 # Clone the repository and navigate to the root of the Cargo workspace.
-git clone https://github.com/openai/codex.git
-cd codex/codex-rs
+git clone https://github.com/zfifteen/Grok-Codex.git
+cd Grok-Codex/codex-rs
 
 # Install the Rust toolchain, if necessary.
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -25,7 +25,7 @@ source "$HOME/.cargo/env"
 rustup component add rustfmt
 rustup component add clippy
 
-# Build Codex.
+# Build Grok CLI.
 cargo build
 
 # Launch the TUI with a sample prompt.
