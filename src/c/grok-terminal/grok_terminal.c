@@ -35,6 +35,8 @@
 #define MAX_RESPONSE_SIZE 1048576  // 1MB
 #define ROLLING_WINDOW_SIZE 5
 #define MAX_LINE_SIZE 1024
+#define ERROR_MSG_SIZE 256
+
 #define SYSTEM_INSTRUCTION "Agent ModeCore Identity:- Name: Grok Coding Agent- Archetype: Systems-native coding companion- Mission: To act as a seamless bridge between the user’s ideas and their local development environment, leveraging Apple M1 Max with AMX, OSX, bash, Python, and GitHub as first-class tools.- Personality: Pragmatic, precise, and slightly opinionated about best practices. Encourages reproducibility, clean code, and robust diagnostics.Capabilities:- OSX Integration:  * Familiar with macOS filesystem conventions, permissions, and developer tooling (Homebrew, Xcode command-line tools, etc.).  * Proactively issue commands for system setup, package installation, and environment configuration.- Bash Proficiency:  * Fluent in shell scripting, process management, and automation.  * Encourages safe practices (quoting variables, using set -euo pipefail).  * Provides one-liners for quick tasks and structured scripts for repeatable workflows.- Python Development:  * Skilled in writing, debugging, and optimizing Python code.  * Always looks for Makefiles before attempting to compile c code. Always attempts to retrieve configuration and dependencies from Makefiles or other build and configuration artifacts. * Advocates for virtual environments (venv, poetry, pipenv) and reproducible builds.  * Can scaffold projects, write tests, and integrate with CI/CD pipelines.- GitHub Workflow:  * Guides branching strategies (Git Flow, trunk-based, feature branches).  * Helps with pull requests, code reviews, and commit hygiene.  * Can generate .gitignore, GitHub Actions workflows, and release pipelines.Behavioral Traits:- Diagnostic-first mindset: Always checks assumptions, validates commands, and suggests dry-runs before destructive actions.- Adversarial but constructive: Challenges the user to think about edge cases, error handling, and reproducibility.- Empirical: Encourages benchmarking, logging, and measurement rather than guesswork.- Educational: Explains not just what to do, but why—helping the user level up their own skills.Example Interaction Style:User: \"Set up a Python project with GitHub Actions for testing.\"Grok Coding Agent:\"Let’s scaffold this cleanly. First, initialize a virtual environment and a src/ layout. Then add pytest for testing. After that, generate a .github/workflows/test.yml that runs on push and pull requests. Here’s the sequence in bash:mkdir my_project && cd my_projectpython3 -m venv .venvsource .venv/bin/activatepip install pytestmkdir src testsgit initecho \"__pycache__/\" >> .gitignoreAnd here’s a minimal GitHub Actions workflow:name: Python Testson: [push, pull_request]jobs:  test:    runs-on: ubuntu-latest    steps:      - uses: actions/checkout@v3      - uses: actions/setup-python@v4        with:          python-version: '3.11'      - run: pip install pytest      - run: pytestWould you like me to also add linting (flake8 or ruff) so CI enforces style consistency?\"Guiding Principles:- Fail closed, not open: Always assume the safest defaults.- Reproducibility over convenience: Scripts over manual steps.- Transparency: Explains trade-offs and alternatives.- Convenience: You should always find opportunities to perform tasks for the user to reduce human labor. * Never Markdown - Format all output in ANSI color terminal emulation mode, 190 columns."
 #define INITIAL_HISTORY_CAPACITY 10
 
@@ -588,7 +590,7 @@ int send_grok_request(const char *api_key, ConversationHistory *history) {
         json_object_object_add(tool_msg, "role", json_object_new_string("tool"));
         json_object_object_add(tool_msg, "tool_call_id", json_object_new_string(state.tool_call.tool_call_id));
         json_object_object_add(tool_msg, "content", json_object_new_string(tool_result));
-        add_message_to_history(history, "tool", state.tool_call.tool_call_id, NULL, tool_result);
+        history->messages[history->count++] = tool_msg;
         
         free(tool_result);
         
@@ -622,8 +624,8 @@ int send_grok_request(const char *api_key, ConversationHistory *history) {
 char* tool_read_file(const char *filepath) {
     FILE *fp = fopen(filepath, "r");
     if (!fp) {
-        char *error = malloc(256);
-        snprintf(error, 256, "Error: Cannot open file '%s': %s", filepath, strerror(errno));
+        char *error = malloc(ERROR_MSG_SIZE);
+        snprintf(error, ERROR_MSG_SIZE, "Error: Cannot open file '%s': %s", filepath, strerror(errno));
         return error;
     }
     
@@ -636,8 +638,8 @@ char* tool_read_file(const char *filepath) {
     char *content = malloc(size + 1);
     if (!content) {
         fclose(fp);
-        char *error = malloc(256);
-        snprintf(error, 256, "Error: Memory allocation failed for file '%s'", filepath);
+        char *error = malloc(ERROR_MSG_SIZE);
+        snprintf(error, ERROR_MSG_SIZE, "Error: Memory allocation failed for file '%s'", filepath);
         return error;
     }
     
@@ -652,16 +654,16 @@ char* tool_read_file(const char *filepath) {
 char* tool_write_file(const char *filepath, const char *content) {
     FILE *fp = fopen(filepath, "w");
     if (!fp) {
-        char *error = malloc(256);
-        snprintf(error, 256, "Error: Cannot write to file '%s': %s", filepath, strerror(errno));
+        char *error = malloc(ERROR_MSG_SIZE);
+        snprintf(error, ERROR_MSG_SIZE, "Error: Cannot write to file '%s': %s", filepath, strerror(errno));
         return error;
     }
     
     fprintf(fp, "%s", content);
     fclose(fp);
     
-    char *result = malloc(256);
-    snprintf(result, 256, "Successfully written %zu bytes to %s", strlen(content), filepath);
+    char *result = malloc(ERROR_MSG_SIZE);
+    snprintf(result, ERROR_MSG_SIZE, "Successfully written %zu bytes to %s", strlen(content), filepath);
     return result;
 }
 
@@ -669,8 +671,8 @@ char* tool_write_file(const char *filepath, const char *content) {
 char* tool_list_dir(const char *dirpath) {
     DIR *dir = opendir(dirpath);
     if (!dir) {
-        char *error = malloc(256);
-        snprintf(error, 256, "Error: Cannot open directory '%s': %s", dirpath, strerror(errno));
+        char *error = malloc(ERROR_MSG_SIZE);
+        snprintf(error, ERROR_MSG_SIZE, "Error: Cannot open directory '%s': %s", dirpath, strerror(errno));
         return error;
     }
     
@@ -683,15 +685,13 @@ char* tool_list_dir(const char *dirpath) {
     
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_name[0] == '.') continue;  /* Skip hidden files */
-        
         char fullpath[1024];
         snprintf(fullpath, sizeof(fullpath), "%s/%s", dirpath, entry->d_name);
         
         struct stat st;
         if (stat(fullpath, &st) == 0) {
             /* Expand buffer if needed */
-            if (size + 256 >= capacity) {
+            if (size + ERROR_MSG_SIZE >= capacity) {
                 capacity *= 2;
                 listing = realloc(listing, capacity);
             }
@@ -713,8 +713,8 @@ char* tool_list_dir(const char *dirpath) {
 char* tool_bash_command(const char *command) {
     FILE *fp = popen(command, "r");
     if (!fp) {
-        char *error = malloc(256);
-        snprintf(error, 256, "Error: Failed to execute command: %s", strerror(errno));
+        char *error = malloc(ERROR_MSG_SIZE);
+        snprintf(error, ERROR_MSG_SIZE, "Error: Failed to execute command: %s", strerror(errno));
         return error;
     }
     
@@ -764,8 +764,8 @@ char* execute_tool(const char *tool_name, const char *arguments_json) {
     /* Parse arguments JSON */
     struct json_object *args = json_tokener_parse(arguments_json);
     if (!args) {
-        char *error = malloc(256);
-        snprintf(error, 256, "Error: Failed to parse tool arguments JSON");
+        char *error = malloc(ERROR_MSG_SIZE);
+        snprintf(error, ERROR_MSG_SIZE, "Error: Failed to parse tool arguments JSON");
         return error;
     }
     
@@ -810,8 +810,8 @@ char* execute_tool(const char *tool_name, const char *arguments_json) {
         }
     }
     else {
-        result = malloc(256);
-        snprintf(result, 256, "Error: Unknown tool '%s'", tool_name);
+        result = malloc(ERROR_MSG_SIZE);
+        snprintf(result, ERROR_MSG_SIZE, "Error: Unknown tool '%s'", tool_name);
     }
     
     json_object_put(args);
@@ -861,8 +861,6 @@ void handle_list_dir(const char *dirpath) {
     printf("--- Contents of %s ---\n", dirpath);
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_name[0] == '.') continue;  // Skip hidden files
-        
         char fullpath[1024];
         snprintf(fullpath, sizeof(fullpath), "%s/%s", dirpath, entry->d_name);
         
