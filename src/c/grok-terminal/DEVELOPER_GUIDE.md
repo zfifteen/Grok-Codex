@@ -350,7 +350,7 @@ Select each model and verify:
 {
     "grok-vision-beta-2024",
     "Grok Vision Beta (2024)",
-    "Multimodal model with image understanding and enhanced visual reasoning capabilities for complex analysis"
+    "Multimodal model for image understanding and advanced visual reasoning"
 }
 ```
 
