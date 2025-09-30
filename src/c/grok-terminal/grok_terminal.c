@@ -558,7 +558,7 @@ int send_grok_request(const char *api_key, ConversationHistory *history) {
         json_object_object_add(tool_msg, "role", json_object_new_string("tool"));
         json_object_object_add(tool_msg, "tool_call_id", json_object_new_string(state.tool_call.tool_call_id));
         json_object_object_add(tool_msg, "content", json_object_new_string(tool_result));
-        history->messages[history->count++] = tool_msg;
+        add_message_to_history(history, "tool", state.tool_call.tool_call_id, NULL, tool_result);
         
         free(tool_result);
         
