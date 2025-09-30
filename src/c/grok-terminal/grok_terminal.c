@@ -73,10 +73,40 @@ typedef struct {
 } ResponseState;
 
 /* Forward declarations */
+/**
+ * Executes the specified tool with the given arguments.
+ * 
+ * Returns a dynamically allocated string containing the result.
+ * The caller is responsible for freeing the returned string.
+ */
 char* execute_tool(const char *tool_name, const char *arguments_json);
+/**
+ * Reads the contents of the specified file.
+ * 
+ * Returns a dynamically allocated string containing the file contents.
+ * The caller is responsible for freeing the returned string.
+ */
 char* tool_read_file(const char *filepath);
+/**
+ * Writes the specified content to the given file.
+ * 
+ * Returns a dynamically allocated string indicating success or error.
+ * The caller is responsible for freeing the returned string.
+ */
 char* tool_write_file(const char *filepath, const char *content);
+/**
+ * Lists the contents of the specified directory.
+ * 
+ * Returns a dynamically allocated string containing the directory listing.
+ * The caller is responsible for freeing the returned string.
+ */
 char* tool_list_dir(const char *dirpath);
+/**
+ * Executes the specified bash command.
+ * 
+ * Returns a dynamically allocated string containing the command output.
+ * The caller is responsible for freeing the returned string.
+ */
 char* tool_bash_command(const char *command);
 
 /* Initialize response state */
