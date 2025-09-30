@@ -421,14 +421,28 @@ void handle_model_selection() {
         return;
     }
     
-    int choice = atoi(choice_input);
-    
+    char *endptr;
+    long choice_long = strtol(choice_input, &endptr, 10);
+
+    // Remove trailing newline from input if present
+    size_t len = strlen(choice_input);
+    if (len > 0 && choice_input[len - 1] == '\n') {
+        choice_input[len - 1] = '\0';
+    }
+
+    // Check for conversion errors: no digits found, extra characters, or out of int range
+    if (choice_input[0] == '\0' || *endptr != '\0' || choice_long < 0 || choice_long > INT_MAX) {
+        printf("Error: Invalid input. Please enter a valid number between 1 and %zu, or 0 to cancel.\n", NUM_MODEL_PRESETS);
+        return;
+    }
+
+    int choice = (int)choice_long;
+
     /* Validate choice */
     if (choice == 0) {
         printf("Selection cancelled.\n");
         return;
     }
-    
     if (choice < 1 || (size_t)choice > NUM_MODEL_PRESETS) {
         printf("Error: Invalid choice. Please select a number between 1 and %zu.\n", 
                NUM_MODEL_PRESETS);
