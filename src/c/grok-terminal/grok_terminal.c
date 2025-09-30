@@ -29,11 +29,55 @@
 #include <gmp.h>
 
 #define API_URL "https://api.x.ai/v1/chat/completions"
-#define MODEL "grok-code-fast-1"
+#define DEFAULT_MODEL "grok-code-fast-1"
 #define MAX_INPUT_SIZE 4096
 #define MAX_RESPONSE_SIZE 1048576  // 1MB
 #define ROLLING_WINDOW_SIZE 5
 #define MAX_LINE_SIZE 1024
+#define MAX_MODEL_NAME_SIZE 64
+#define MAX_MODEL_DESC_SIZE 256
+
+/* Model preset structure for XAI models */
+typedef struct {
+    const char *name;           // Model identifier for API
+    const char *label;          // User-friendly display name
+    const char *description;    // Description of when to use this model
+} ModelPreset;
+
+/* Available XAI model presets - easily extendable
+ * 
+ * To add a new model:
+ * 1. Add a new ModelPreset entry to this array
+ * 2. Set the name (API identifier), label (display name), and description
+ * 3. The menu will automatically include the new model
+ */
+static const ModelPreset model_presets[] = {
+    {
+        "grok-code-fast-1",
+        "Grok Code Fast",
+        "Optimized for fast coding tasks with balanced performance"
+    },
+    {
+        "grok-2-latest",
+        "Grok 2 Latest",
+        "Latest Grok 2 model with enhanced reasoning capabilities"
+    },
+    {
+        "grok-2-1212",
+        "Grok 2 (Dec 2024)",
+        "Grok 2 December 2024 snapshot with improved accuracy"
+    },
+    {
+        "grok-beta",
+        "Grok Beta",
+        "Beta version with experimental features and capabilities"
+    }
+};
+
+#define NUM_MODEL_PRESETS (sizeof(model_presets) / sizeof(model_presets[0]))
+
+/* Global state for current model */
+static char current_model[MAX_MODEL_NAME_SIZE] = DEFAULT_MODEL;
 
 /* Global state for streaming response handling */
 typedef struct {
@@ -198,7 +242,7 @@ int send_grok_request(const char *api_key, const char *user_message) {
     struct json_object *messages = json_object_new_array();
     struct json_object *message = json_object_new_object();
     
-    json_object_object_add(root, "model", json_object_new_string(MODEL));
+    json_object_object_add(root, "model", json_object_new_string(current_model));
     json_object_object_add(message, "role", json_object_new_string("user"));
     json_object_object_add(message, "content", json_object_new_string(user_message));
     json_object_array_add(messages, message);
@@ -340,6 +384,7 @@ void display_help() {
     printf("\n=== Grok Terminal - Interactive AI Session ===\n");
     printf("\nAvailable commands:\n");
     printf("  <text>              - Send message to Grok AI\n");
+    printf("  /model              - Display model selection menu\n");
     printf("  read_file:<path>    - Read and display file contents\n");
     printf("  write_file:<path>:<content> - Write content to file\n");
     printf("  list_dir:<path>     - List directory contents\n");
@@ -347,6 +392,70 @@ void display_help() {
     printf("  exit                - Exit the terminal\n");
     printf("\nVerbose outputs (thinking steps) are buffered and summarized.\n");
     printf("Only the last 5 lines are shown during streaming.\n\n");
+}
+
+/* Display model selection menu and handle user choice */
+void handle_model_selection() {
+    printf("\n=== XAI Model Selection Menu ===\n");
+    printf("\nAvailable models:\n\n");
+    
+    /* Display all available models with descriptions */
+    for (size_t i = 0; i < NUM_MODEL_PRESETS; i++) {
+        printf("  [%zu] %s\n", i + 1, model_presets[i].label);
+        printf("      %s\n", model_presets[i].description);
+        
+        /* Show if this is the currently selected model */
+        if (strcmp(current_model, model_presets[i].name) == 0) {
+            printf("      ✓ Currently selected\n");
+        }
+        printf("\n");
+    }
+    
+    printf("Enter model number to select (or 0 to cancel): ");
+    fflush(stdout);
+    
+    /* Read user choice */
+    char choice_input[16];
+    if (!fgets(choice_input, sizeof(choice_input), stdin)) {
+        printf("Selection cancelled.\n");
+        return;
+    }
+    
+    char *endptr;
+    long choice_long = strtol(choice_input, &endptr, 10);
+
+    // Remove trailing newline from input if present
+    size_t len = strlen(choice_input);
+    if (len > 0 && choice_input[len - 1] == '\n') {
+        choice_input[len - 1] = '\0';
+    }
+
+    // Check for conversion errors: no digits found, extra characters, or out of int range
+    if (choice_input[0] == '\0' || *endptr != '\0' || choice_long < 0 || choice_long > INT_MAX) {
+        printf("Error: Invalid input. Please enter a valid number between 1 and %zu, or 0 to cancel.\n", NUM_MODEL_PRESETS);
+        return;
+    }
+
+    int choice = (int)choice_long;
+
+    /* Validate choice */
+    if (choice == 0) {
+        printf("Selection cancelled.\n");
+        return;
+    }
+    if (choice < 1 || (size_t)choice > NUM_MODEL_PRESETS) {
+        printf("Error: Invalid choice. Please select a number between 1 and %zu.\n", 
+               NUM_MODEL_PRESETS);
+        return;
+    }
+    
+    /* Update current model */
+    size_t index = (size_t)choice - 1;
+    strncpy(current_model, model_presets[index].name, MAX_MODEL_NAME_SIZE - 1);
+    current_model[MAX_MODEL_NAME_SIZE - 1] = '\0';
+    
+    printf("\n✓ Model changed to: %s\n", model_presets[index].label);
+    printf("  %s\n\n", model_presets[index].description);
 }
 
 /* Main interactive loop */
@@ -369,8 +478,8 @@ int main(int argc __attribute__((unused)), char *argv[] __attribute__((unused)))
     
     /* Display welcome message */
     printf("=== Grok Terminal ===\n");
-    printf("Connected to xAI API (model: %s)\n", MODEL);
-    printf("Type 'exit' to quit, or enter your message.\n");
+    printf("Connected to xAI API (model: %s)\n", current_model);
+    printf("Type 'exit' to quit, '/model' to change model, or enter your message.\n");
     display_help();
     
     /* Interactive loop */
@@ -396,6 +505,12 @@ int main(int argc __attribute__((unused)), char *argv[] __attribute__((unused)))
         if (strcmp(input, "exit") == 0) {
             printf("Goodbye!\n");
             break;
+        }
+        
+        /* Check for model selection command */
+        if (strcmp(input, "/model") == 0) {
+            handle_model_selection();
+            continue;
         }
         
         /* Check for special commands */
