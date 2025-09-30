@@ -97,6 +97,12 @@ Once running, you can use the following commands:
   > Hello, Grok! Tell me about yourself.
   ```
 
+- **Select Model**: Display the model selection menu and switch between XAI models
+  ```
+  > /model
+  ```
+  This will show a menu of available models with descriptions. Select a model by entering its number.
+
 - **Read File**: Read and display file contents
   ```
   > read_file:/path/to/file.txt
@@ -136,9 +142,49 @@ Run the included demo script to see all features in action:
 
 The program uses the xAI API with the following defaults:
 - **Endpoint**: `https://api.x.ai/v1/chat/completions`
-- **Model**: `grok-code-fast-1`
+- **Default Model**: `grok-code-fast-1`
 - **Streaming**: Enabled (Server-Sent Events)
 - **Max Tokens**: 4096
+
+### Available Models
+
+The terminal includes a model selection menu (`/model` command) with the following XAI models:
+
+1. **Grok Code Fast** (`grok-code-fast-1`) - Optimized for fast coding tasks with balanced performance
+2. **Grok 2 Latest** (`grok-2-latest`) - Latest Grok 2 model with enhanced reasoning capabilities
+3. **Grok 2 (Dec 2024)** (`grok-2-1212`) - Grok 2 December 2024 snapshot with improved accuracy
+4. **Grok Beta** (`grok-beta`) - Beta version with experimental features and capabilities
+
+### Extending the Model Menu
+
+The model system is designed to be easily extendable. To add a new model:
+
+1. Open `grok_terminal.c` in your editor
+2. Find the `model_presets` array (around line 54)
+3. Add a new `ModelPreset` entry with three fields:
+   ```c
+   {
+       "api-model-name",      // API identifier
+       "Display Name",        // User-friendly name
+       "Model description"    // When to use this model
+   }
+   ```
+4. Save and rebuild with `make`
+
+**Example**: Adding a new hypothetical "Grok 3" model:
+
+```c
+static const ModelPreset model_presets[] = {
+    // ... existing models ...
+    {
+        "grok-3-preview",
+        "Grok 3 Preview",
+        "Early preview of Grok 3 with advanced multimodal capabilities"
+    }
+};
+```
+
+The menu will automatically include the new model without any other code changes.
 
 ## Verbose Output Management
 

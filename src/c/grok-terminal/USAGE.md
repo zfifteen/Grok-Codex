@@ -5,11 +5,12 @@ This document provides comprehensive examples of using the Grok Terminal program
 ## Table of Contents
 
 1. [Basic Setup](#basic-setup)
-2. [File Operations](#file-operations)
-3. [Directory Operations](#directory-operations)
-4. [Bash Commands](#bash-commands)
-5. [Conversational AI](#conversational-ai)
-6. [Advanced Usage](#advanced-usage)
+2. [Model Selection](#model-selection)
+3. [File Operations](#file-operations)
+4. [Directory Operations](#directory-operations)
+5. [Bash Commands](#bash-commands)
+6. [Conversational AI](#conversational-ai)
+7. [Advanced Usage](#advanced-usage)
 
 ## Basic Setup
 
@@ -31,6 +32,66 @@ cd src/c/grok-terminal
 ```
 
 You'll see a welcome message with available commands.
+
+## Model Selection
+
+### Viewing Available Models
+
+Display the model selection menu:
+
+```
+> /model
+
+=== XAI Model Selection Menu ===
+
+Available models:
+
+  [1] Grok Code Fast
+      Optimized for fast coding tasks with balanced performance
+      ✓ Currently selected
+
+  [2] Grok 2 Latest
+      Latest Grok 2 model with enhanced reasoning capabilities
+
+  [3] Grok 2 (Dec 2024)
+      Grok 2 December 2024 snapshot with improved accuracy
+
+  [4] Grok Beta
+      Beta version with experimental features and capabilities
+
+Enter model number to select (or 0 to cancel):
+```
+
+### Switching Models
+
+Select a model by entering its number:
+
+```
+> /model
+Enter model number to select (or 0 to cancel): 2
+
+✓ Model changed to: Grok 2 Latest
+  Latest Grok 2 model with enhanced reasoning capabilities
+```
+
+All subsequent conversations will use the selected model until you change it again or restart the program.
+
+### Cancelling Selection
+
+Enter 0 to cancel without changing the model:
+
+```
+> /model
+Enter model number to select (or 0 to cancel): 0
+Selection cancelled.
+```
+
+### Model Selection Best Practices
+
+- **For Fast Responses**: Use "Grok Code Fast" for quick coding tasks
+- **For Complex Reasoning**: Use "Grok 2 Latest" for deeper analysis
+- **For Specific Versions**: Use "Grok 2 (Dec 2024)" when you need a stable, versioned model
+- **For Experimentation**: Use "Grok Beta" to try the latest features
 
 ## File Operations
 
