@@ -106,3 +106,77 @@ const PRESETS: &[ModelPreset] = &[
 pub fn builtin_model_presets(_auth_mode: Option<AuthMode>) -> Vec<ModelPreset> {
     PRESETS.to_vec()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_all_model_presets_have_descriptions() {
+        let presets = builtin_model_presets(None);
+        for preset in presets {
+            assert!(
+                !preset.description.is_empty(),
+                "Model preset '{}' is missing a description",
+                preset.id
+            );
+        }
+    }
+
+    #[test]
+    fn test_gpt5_codex_presets_exist() {
+        let presets = builtin_model_presets(None);
+        let codex_presets: Vec<_> = presets
+            .iter()
+            .filter(|p| p.model == "gpt-5-codex")
+            .collect();
+
+        assert_eq!(
+            codex_presets.len(),
+            3,
+            "Expected exactly 3 gpt-5-codex presets"
+        );
+
+        // Verify all three reasoning levels are present
+        let has_low = codex_presets
+            .iter()
+            .any(|p| p.effort == Some(ReasoningEffort::Low));
+        let has_medium = codex_presets
+            .iter()
+            .any(|p| p.effort == Some(ReasoningEffort::Medium));
+        let has_high = codex_presets
+            .iter()
+            .any(|p| p.effort == Some(ReasoningEffort::High));
+
+        assert!(has_low, "Missing gpt-5-codex low preset");
+        assert!(has_medium, "Missing gpt-5-codex medium preset");
+        assert!(has_high, "Missing gpt-5-codex high preset");
+    }
+
+    #[test]
+    fn test_descriptions_start_with_em_dash() {
+        let presets = builtin_model_presets(None);
+        for preset in presets {
+            if !preset.description.is_empty() {
+                assert!(
+                    preset.description.starts_with("—"),
+                    "Description for '{}' should start with em-dash (—) for consistency",
+                    preset.id
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_preset_ids_are_unique() {
+        let presets = builtin_model_presets(None);
+        let mut ids = std::collections::HashSet::new();
+        for preset in presets {
+            assert!(
+                ids.insert(preset.id),
+                "Duplicate preset id found: '{}'",
+                preset.id
+            );
+        }
+    }
+}
