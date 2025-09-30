@@ -22,7 +22,8 @@ PROJECT_LIBS = $(CURL_LIBS) $(JSON_LIBS) $(COMMON_LIBS)
 
 # Build target
 .PHONY: all
-all: check-deps $(TARGET)
+all: check-deps
+	@$(MAKE) $(TARGET)
 
 # Check for project dependencies
 .PHONY: check-deps
