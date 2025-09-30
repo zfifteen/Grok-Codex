@@ -1,0 +1,9 @@
+[model_providers.api_x]
+name = "xAI"
+base_url = "https://api.x.ai/v1"
+env_key = "xai-mA5XX2B7i9yGdBHVE5BtrEnWDJIOtLBwxrylF6YuIGgro3i6AnkXSv90bCH0Lno13lTfry8Mc1ZoY6gY"
+wire_api = "chat"           # or "responses" if api.x.ai uses that
+query_params = {}
+http_headers = {}
+request_max_retries = 4
+stream_max_retries = 10

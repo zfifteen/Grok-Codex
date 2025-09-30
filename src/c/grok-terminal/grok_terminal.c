@@ -34,6 +34,7 @@
 #define MAX_RESPONSE_SIZE 1048576  // 1MB
 #define ROLLING_WINDOW_SIZE 5
 #define MAX_LINE_SIZE 1024
+#define SYSTEM_INSTRUCTION "Agent Mode"
 
 /* Global state for streaming response handling */
 typedef struct {
@@ -196,12 +197,20 @@ int send_grok_request(const char *api_key, const char *user_message) {
     /* Prepare JSON payload */
     struct json_object *root = json_object_new_object();
     struct json_object *messages = json_object_new_array();
+
+    /* Add system message first */
+    struct json_object *system_msg = json_object_new_object();
+    json_object_object_add(system_msg, "role", json_object_new_string("system"));
+    json_object_object_add(system_msg, "content", json_object_new_string(SYSTEM_INSTRUCTION));
+    json_object_array_add(messages, system_msg);
+
+    /* Add user message */
     struct json_object *message = json_object_new_object();
-    
-    json_object_object_add(root, "model", json_object_new_string(MODEL));
     json_object_object_add(message, "role", json_object_new_string("user"));
     json_object_object_add(message, "content", json_object_new_string(user_message));
     json_object_array_add(messages, message);
+
+    json_object_object_add(root, "model", json_object_new_string(MODEL));
     json_object_object_add(root, "messages", messages);
     json_object_object_add(root, "stream", json_object_new_boolean(1));
     json_object_object_add(root, "max_tokens", json_object_new_int(4096));

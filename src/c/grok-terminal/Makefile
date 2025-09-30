@@ -15,10 +15,14 @@ CURL_CFLAGS := $(shell pkg-config --cflags libcurl 2>/dev/null || echo "")
 CURL_LIBS := $(shell pkg-config --libs libcurl 2>/dev/null || echo "-lcurl")
 JSON_CFLAGS := $(shell pkg-config --cflags json-c 2>/dev/null || echo "")
 JSON_LIBS := $(shell pkg-config --libs json-c 2>/dev/null || echo "-ljson-c")
+GMP_CFLAGS := $(shell pkg-config --cflags gmp 2>/dev/null || echo "")
+GMP_LIBS := $(shell pkg-config --libs gmp 2>/dev/null || echo "-lgmp")
+MPFR_CFLAGS := $(shell pkg-config --cflags mpfr 2>/dev/null || echo "")
+MPFR_LIBS := $(shell pkg-config --libs mpfr 2>/dev/null || echo "-lmpfr")
 
 # Combined flags
-PROJECT_CFLAGS = $(CFLAGS) $(CURL_CFLAGS) $(JSON_CFLAGS)
-PROJECT_LIBS = $(CURL_LIBS) $(JSON_LIBS) $(COMMON_LIBS)
+PROJECT_CFLAGS = $(CFLAGS) $(CURL_CFLAGS) $(JSON_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS)
+PROJECT_LIBS = $(CURL_LIBS) $(JSON_LIBS) $(GMP_LIBS) $(MPFR_LIBS) $(COMMON_LIBS)
 
 # Build target
 .PHONY: all
@@ -29,8 +33,10 @@ all: check-deps
 .PHONY: check-deps
 check-deps:
 	@echo "Checking dependencies for $(PROJECT)..."
-	@pkg-config --exists libcurl || (echo "Error: libcurl not found. Install with: sudo apt-get install libcurl4-openssl-dev" && exit 1)
-	@pkg-config --exists json-c || (echo "Error: json-c not found. Install with: sudo apt-get install libjson-c-dev" && exit 1)
+	@pkg-config --exists libcurl || (echo "Error: libcurl not found. Install with: brew install curl" && exit 1)
+	@pkg-config --exists json-c || (echo "Error: json-c not found. Install with: brew install json-c" && exit 1)
+	@pkg-config --exists gmp || (echo "Error: gmp not found. Install with: brew install gmp" && exit 1)
+	@pkg-config --exists mpfr || (echo "Error: mpfr not found. Install with: brew install mpfr" && exit 1)
 	@echo "✓ All dependencies available"
 
 # Build the executable

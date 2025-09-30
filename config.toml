@@ -1,0 +1,19 @@
+model = "gpt-5"
+model_reasoning_effort = "high"
+[projects."/Users/velocityworks/IdeaProjects/unified-framework"]
+trust_level = "trusted"
+
+[projects."/Users/velocityworks/IdeaProjects/wave-crispr-signal"]
+trust_level = "trusted"
+
+[projects."/Users/velocityworks/IdeaProjects/z-amx"]
+trust_level = "trusted"
+
+[projects."/Users/velocityworks/IdeaProjects"]
+trust_level = "trusted"
+
+[projects."/Users/velocityworks/IdeaProjects/cognitive-number-theory"]
+trust_level = "trusted"
+
+[projects."/Users/velocityworks/IdeaProjects/Grok-Codex"]
+trust_level = "trusted"
