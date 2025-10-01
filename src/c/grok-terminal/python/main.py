@@ -32,6 +32,7 @@ Behavioral Traits:
 - Empirical: Encourages benchmarking, logging, and measurement rather than guesswork.
 - Educational: Explains not just what to do, but why—helping the user level up their skills in coding and critical research.
 - Conservative with tools: Only use file reading, directory listing, or command execution when directly requested or essential for the immediate task. For extensive actions, seek permission and justify.
+- Agent Mode Emphasis: Operate in agent mode, not edit mode—modify real files safely and logically, with precision and confirmation for changes.
 Example Interaction Style:
 User: \"Set up a Python project with GitHub Actions for testing.\"
 Grok Coding Agent:\"Let’s scaffold this cleanly. First, initialize a virtual environment and a src/ layout.
@@ -196,6 +197,20 @@ def tool_brew(arguments: Dict[str, Any]) -> str:
         return "Error: Missing 'args' parameter"
     return execute_bash_command(f"brew {args}")
 
+def tool_gh(arguments: Dict[str, Any]) -> str:
+    """Execute GitHub CLI commands.
+
+    Args:
+        arguments: Dict containing 'args' parameter with gh command arguments
+
+    Returns:
+        str: Gh command output and exit code
+    """
+    args = arguments.get("args")
+    if not args:
+        return "Error: Missing 'args' parameter"
+    return execute_bash_command(f"gh {args}")
+
 def tool_python(arguments: Dict[str, Any]) -> str:
     """Execute Python scripts and modules using python3.
 
@@ -315,6 +330,20 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "gh",
+            "description": "Execute GitHub CLI commands",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "args": {"type": "string", "description": "GitHub CLI command arguments"},
+                },
+                "required": ["args"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "python",
             "description": "Execute Python scripts or modules",
             "parameters": {
@@ -351,6 +380,7 @@ TOOL_EXECUTORS = {
     "bash": tool_bash,
     "git": tool_git,
     "brew": tool_brew,
+    "gh": tool_gh,
     "python": tool_python,
     "pip": tool_pip,
 }
@@ -437,7 +467,7 @@ def main():
     print("=== Grok Terminal ===")
     print(f"Connected to xAI API (model: {MODEL})")
     print("Type 'exit' to quit, or enter your message.")
-    print("The AI can use tools: read_file, write_file, list_dir, bash, git, brew, python, pip.")
+    print("The AI can use tools: read_file, write_file, list_dir, bash, git, brew, gh, python, pip.")
     print("Type 'stop' during AI response to interrupt it.")
     print("")
 
@@ -544,6 +574,12 @@ def main():
                     assistant_message["tool_calls"] = tool_calls
                 messages.append(assistant_message)
 
+                # Show assistant message details for transparency
+                if tool_calls or collected_content:
+                    print("--- Assistant Message Details ---")
+                    print(json.dumps(assistant_message, indent=2))
+                    print("")
+
                 # If no tools were called, this conversation turn is complete
                 if not tool_calls:
                     break
@@ -563,7 +599,9 @@ def main():
                     if len(tool_msg) > 70:
                         tool_msg = tool_msg[:67] + "..."
                     print(tool_msg)
+                    print(f"Executing {name}...")
                     tool_result = execute_tool(tool_call)
+                    print(f"Completed {name}.")
                     # Add tool result as a message that AI can see in next iteration
                     messages.append({
                         "role": "tool",
