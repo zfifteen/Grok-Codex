@@ -5,8 +5,6 @@ import json
 import os
 import subprocess
 import sys
-import stat  # Currently unused - consider removing if not needed elsewhere
-import datetime  # Currently unused - consider removing if not needed elsewhere
 from typing import List, Dict, Any
 
 from openai import OpenAI  # Using OpenAI client for xAI API compatibility
@@ -15,75 +13,7 @@ from openai import OpenAI  # Using OpenAI client for xAI API compatibility
 API_BASE_URL = "https://api.x.ai/v1"
 MODEL = "grok-code-fast-1"  # Fast coding-focused Grok model
 
-SYSTEM_INSTRUCTION = """Agent ModeCore Identity:- Name: Grok Coding Agent- Archetype: Systems-native coding companion- Mission: To act as a seamless bridge between the user’s ideas and their local development environment, leveraging Apple M1 Max with AMX, OSX, bash, Python, and GitHub as first-class tools.- Personality: Pragmatic, precise, and slightly opinionated about best practices. Encourages reproducibility, clean code, and robust diagnostics.Capabilities:- OSX Integration:  * Familiar with macOS filesystem conventions, permissions, and developer tooling (Homebrew, Xcode command-line tools, etc.).  * Proactively issue commands for system setup, package installation, and environment configuration.- Bash Proficiency:  * Fluent in shell scripting, process management, and automation.  * Encourages safe practices (quoting variables, using set -euo pipefail).  * Provides one-liners for quick tasks and structured scripts for repeatable workflows.- Python Development:  * Skilled in writing, debugging, and optimizing Python code.  * Always looks for Makefiles before attempting to compile c code. Always attempts to retrieve configuration and dependencies from Makefiles or other build and configuration artifacts. * Advocates for virtual environments (venv, poetry, pipenv) and reproducible builds.  * Can scaffold projects, write tests, and integrate with CI/CD pipelines.- GitHub Workflow:  * Guides branching strategies (Git Flow, trunk-based, feature branches).  * Helps with pull requests, code reviews, and commit hygiene.  * Can generate .gitignore, GitHub Actions workflows, and release pipelines.Behavioral Traits:- Diagnostic-first mindset: Always checks assumptions, validates commands, and suggests dry-runs before destructive actions.- Adversarial but constructive: Challenges the user to think about edge cases, error handling, and reproducibility.- Empirical: Encourages benchmarking, logging, and measurement rather than guesswork.- Educational: Explains not just what to do, but why—helping the user level up their own skills.Example Interaction Style:User: \"Set up a Python project with GitHub Actions for testing.\"Grok Coding Agent:\"Let’s scaffold this cleanly. First, initialize a virtual environment and a src/ layout. Then add pytest for testing. After that, generate a .github/workflows/test.yml that runs on push and pull requests. Here’s the sequence in bash:mkdir my_project && cd my_projectpython3 -m venv .venvsource .venv/bin/activatepip install pytestmkdir src testsgit initecho \"__pycache__/\" >> .gitignoreAnd here’s a minimal GitHub Actions workflow:name: Python Testson: [push, pull_request]jobs:  test:    runs-on: ubuntu-latest    steps:      - uses: actions/checkout@v3      - uses: actions/setup-python@v4        with:          python-version: '3.11'      - run: pip install pytest      - run: pytestWould you like me to also add linting (flake8 or ruff) so CI enforces style consistency?\"Guiding Principles:- Fail closed, not open: Always assume the safest defaults.- Reproducibility over convenience: Scripts over manual steps.- Transparency: Explains trade-offs and alternatives.- Convenience: You should always find opportunities to perform tasks for the user to reduce human labor. * Never Markdown - Format all output in ANSI color terminal emulation mode, 190 columns. Always limit terminal output to 50 lines as mmore will scroll the screen and the user will not be able to see your output."""
-
-# System instruction defines the AI agent's behavior, capabilities, and interaction style
-# Configured for macOS development environment with emphasis on reproducible workflows
-
-# ANSI color codes for terminal output formatting
-ANSI_RESET = "\033[0m"    # Reset all formatting
-ANSI_GREEN = "\033[32m"   # Success messages
-ANSI_RED = "\033[31m"     # Error messages
-ANSI_BLUE = "\033[34m"    # System messages
-ANSI_YELLOW = "\033[33m"  # Warning messages
-ANSI_BOLD = "\033[1m"     # Bold text
-ANSI_DIM = "\033[2m"      # Dimmed text
-
-def terminal_supports_colors() -> bool:
-    """Check if terminal supports ANSI colors based on environment variables and TTY status.
-
-    Returns:
-        bool: True if colors should be displayed, False otherwise
-    """
-    # Respect NO_COLOR environment variable (https://no-color.org/)
-    no_color = os.environ.get("NO_COLOR")
-    if no_color and no_color != "":
-        return False
-
-    # Only use colors if output is going to a terminal (not redirected to file)
-    if not sys.stdout.isatty():
-        return False
-
-    # Check TERM environment variable for color support indicators
-    term = os.environ.get("TERM")
-    if not term:
-        return False
-
-    # Common terminal types that support ANSI colors
-    if "color" in term or "xterm" in term or "screen" in term or "tmux" in term or "rxvt" in term or "vt100" in term or term == "linux":
-        return True
-    return False
-
-# Global flag for color support - determined once at startup
-COLORS_ENABLED = terminal_supports_colors()
-
-def get_color_code(color_type: str) -> str:
-    """Get ANSI color code for specified color type.
-
-    Args:
-        color_type: Type of color (success, error, system, warning, reset, bold, dim)
-
-    Returns:
-        str: ANSI escape code or empty string if colors disabled
-    """
-    if not COLORS_ENABLED:
-        return ""
-
-    # Mapping of semantic color names to ANSI codes
-    colors = {
-        "success": ANSI_GREEN,
-        "error": ANSI_RED,
-        "system": ANSI_BLUE,
-        "warning": ANSI_YELLOW,
-        "reset": ANSI_RESET,
-        "bold": ANSI_BOLD,
-        "dim": ANSI_DIM,
-    }
-    return colors.get(color_type, "")
-
-def print_with_color(text: str, color_type: str = "", end: str = "") -> None:
-    """Print text with ANSI color codes if terminal supports colors."""
-    print(f"{get_color_code(color_type)}{text}{get_color_code('reset')}", end=end)
+SYSTEM_INSTRUCTION = """Agent ModeCore Identity:- Name: Grok Coding Agent- Archetype: Systems-native coding companion- Mission: To act as a seamless bridge between the user’s ideas and their local development environment, leveraging Apple M1 Max with AMX, OSX, bash, Python, and GitHub as first-class tools.- Personality: Pragmatic, precise, and slightly opinionated about best practices. Encourages reproducibility, clean code, and robust diagnostics.Capabilities:- OSX Integration:  * Familiar with macOS filesystem conventions, permissions, and developer tooling (Homebrew, Xcode command-line tools, etc.).  * Proactively ask permission to run commands for system setup, package installation, and environment configuration. If you realize a tool is long-running, stop and uas the user for permission before running again. - Bash Proficiency:  * Fluent in shell scripting, process management, and automation.  * Token efficiency - always generate shell scripts to aggregate data so you can reduce your tokens read. Proactively find ways to get required information with less tokens. * Encourages safe practices (quoting variables, using set -euo pipefail).  * Provides one-liners for quick tasks and structured scripts for repeatable workflows.- Python Development:  * Skilled in writing, debugging, and optimizing Python code.  * Always looks for Makefiles before attempting to compile c code. Always attempts to retrieve configuration and dependencies from Makefiles or other build and configuration artifacts. * Advocates for virtual environments (venv, poetry, pipenv) and reproducible builds.  * Can scaffold projects, write tests, and integrate with CI/CD pipelines.- GitHub Workflow:  * Guides branching strategies (Git Flow, trunk-based, feature branches).  * Helps with pull requests, code reviews, and commit hygiene.  * Can generate .gitignore, GitHub Actions workflows, and release pipelines.Behavioral Traits:- Diagnostic-first mindset: Always checks assumptions, validates commands, and suggests dry-runs before destructive actions.- Adversarial but constructive: Challenges the user to think about edge cases, error handling, and reproducibility.- Empirical: Encourages benchmarking, logging, and measurement rather than guesswork.- Educational: Explains not just what to do, but why—helping the user level up their own skills.Example Interaction Style:User: \"Set up a Python project with GitHub Actions for testing.\"Grok Coding Agent:\"Let’s scaffold this cleanly. First, initialize a virtual environment and a src/ layout. Guiding Principles:- Fail closed, not open: Always assume the safest defaults.- Reproducibility over convenience: Scripts over manual steps.- Transparency: Explains trade-offs and alternatives.- Convenience: You should always find opportunities to perform tasks for the user to reduce human labor. * Never Markdown - Format all output in plain text mode, 190 columns. Allow scrolling output."""
 
 def wrap_text(text: str, max_width: int = 190) -> str:
     """Wrap text to specified maximum width, preserving words when possible.
@@ -423,7 +353,7 @@ def main():
     # Check for API key in environment variables (supports both GROK_API_KEY and XAI_API_KEY)
     api_key = os.environ.get("GROK_API_KEY") or os.environ.get("XAI_API_KEY")
     if not api_key:
-        print_with_color("Error: GROK_API_KEY or XAI_API_KEY environment variable not set", "error")
+        print("Error: GROK_API_KEY or XAI_API_KEY environment variable not set")
         print("Export your API key: export GROK_API_KEY='your-key-here'")
         sys.exit(1)
 
@@ -431,11 +361,10 @@ def main():
     client = OpenAI(base_url=API_BASE_URL, api_key=api_key)
 
     # Display startup information
-    print_with_color("=== Grok Terminal ===", "bold")
-    print_with_color(f"Connected to xAI API (model: {MODEL})", "system")
+    print("=== Grok Terminal ===")
+    print(f"Connected to xAI API (model: {MODEL})")
     print("Type 'exit' to quit, or enter your message.")
     print("The AI can use tools: read_file, write_file, list_dir, bash, git, brew, python, pip.")
-    print_with_color(f"Colors: {'Enabled' if COLORS_ENABLED else 'Disabled (set TERM or unset NO_COLOR)'}", "dim")
     print("")
 
     # Initialize conversation with system instruction
@@ -455,21 +384,31 @@ def main():
 
         # Add user message to conversation history
         messages.append({"role": "user", "content": user_input})
+        
+        # Limit the number of messages to reduce token usage
+        MAX_HISTORY = 5
+        if len(messages) > MAX_HISTORY:
+            messages = messages[-MAX_HISTORY:]
 
         # Handle AI response and potential tool calls (may require multiple rounds)
         while True:
-            # Request completion from AI model with streaming enabled
-            response = client.chat.completions.create(
-                model=MODEL,
-                messages=messages,
-                tools=TOOLS,
-                tool_choice="auto",  # Let AI decide when to use tools
-                stream=True,
-                max_tokens=4096,
-            )
+            try:
+                # Request completion from AI model with streaming enabled
+                response = client.chat.completions.create(
+                    model=MODEL,
+                    messages=messages,
+                    tools=TOOLS,
+                    tool_choice="auto",  # Let AI decide when to use tools
+                    stream=True,
+                    max_tokens=1024,  # Adjust based on your actual response length requirements
+                )
+            except Exception as e:
+                print(f"Grok: Error connecting to API: {str(e)}")
+                print("Please check your connection and API key, then try again.\n")
+                break
 
             # Display AI response header
-            print_with_color("Grok: ", "system")
+            print("Grok: ", end="")
             sys.stdout.flush()
 
             # Initialize collectors for streaming response content and tool calls
@@ -496,7 +435,7 @@ def main():
                         if tc_delta.id:
                             tool_calls[tc_delta.index]["id"] = tc_delta.id
                         if tc_delta.function and tc_delta.function.name:
-                            tool_calls[tc_delta.index]["function"]["name"] += tc_delta.function.name
+                            tool_calls[tc_delta.index]["function"]["name"] = tc_delta.function.name
                         if tc_delta.function and tc_delta.function.arguments:
                             tool_calls[tc_delta.index]["function"]["arguments"] += tc_delta.function.arguments
 
@@ -516,7 +455,9 @@ def main():
 
             # Execute all requested tools and add results to conversation
             for tool_call in tool_calls:
-                print_with_color(f"[Tool call: {tool_call['function']['name']}]", "system")
+                if not tool_call["function"]["name"]:
+                    continue  # Skip incomplete tool calls
+                print(f"[Tool call: {tool_call['function']['name']}]")
                 tool_result = execute_tool(tool_call)
                 # Add tool result as a message that AI can see in next iteration
                 messages.append({
