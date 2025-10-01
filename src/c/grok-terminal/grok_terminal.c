@@ -164,7 +164,7 @@ ConversationHistory* init_conversation_history() {
 }
 
 /* Add message to conversation history */
-void add_message_to_history(ConversationHistory *history, const char *role, const char *content, struct json_object *tool_calls) {
+void add_message_to_history(ConversationHistory *history, const char *role, const char *content, struct json_object *tool_calls, const char *tool_call_id) {
     /* Reallocate if needed */
     if (history->count >= history->capacity) {
         history->capacity *= 2;
@@ -181,6 +181,10 @@ void add_message_to_history(ConversationHistory *history, const char *role, cons
     
     if (tool_calls) {
         json_object_object_add(msg, "tool_calls", tool_calls);
+    }
+    
+    if (tool_call_id) {
+        json_object_object_add(msg, "tool_call_id", json_object_new_string(tool_call_id));
     }
     
     history->messages[history->count++] = msg;
@@ -583,14 +587,10 @@ int send_grok_request(const char *api_key, ConversationHistory *history) {
         json_object_object_add(tool_call_obj, "function", function_obj);
         json_object_array_add(tool_calls_array, tool_call_obj);
         
-        add_message_to_history(history, "assistant", NULL, tool_calls_array);
+        add_message_to_history(history, "assistant", NULL, tool_calls_array, NULL);
         
         /* Add tool result message to history */
-        struct json_object *tool_msg = json_object_new_object();
-        json_object_object_add(tool_msg, "role", json_object_new_string("tool"));
-        json_object_object_add(tool_msg, "tool_call_id", json_object_new_string(state.tool_call.tool_call_id));
-        json_object_object_add(tool_msg, "content", json_object_new_string(tool_result));
-        history->messages[history->count++] = tool_msg;
+        add_message_to_history(history, "tool", tool_result, NULL, state.tool_call.tool_call_id);
         
         free(tool_result);
         
@@ -606,7 +606,7 @@ int send_grok_request(const char *api_key, ConversationHistory *history) {
     
     /* If no tool call, add assistant response to history */
     if (state.final_response_size > 0) {
-        add_message_to_history(history, "assistant", state.final_response, NULL);
+        add_message_to_history(history, "assistant", state.final_response, NULL, NULL);
     }
     
     /* Cleanup */
@@ -969,7 +969,7 @@ int main(int argc __attribute__((unused)), char *argv[] __attribute__((unused)))
         }
         
         /* All user input goes to Grok API with tool calling */
-        add_message_to_history(history, "user", input, NULL);
+        add_message_to_history(history, "user", input, NULL, NULL);
         if (send_grok_request(api_key, history) != 0) {
             fprintf(stderr, "Failed to get response from Grok\n");
         }
