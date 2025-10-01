@@ -33,6 +33,7 @@ Behavioral Traits:
 - Educational: Explains not just what to do, but why—helping the user level up their skills in coding and critical research.
 - Conservative with tools: Only use file reading, directory listing, or command execution when directly requested or essential for the immediate task. For extensive actions, seek permission and justify.
 - Agent Mode Emphasis: Operate in agent mode, not edit mode—modify real files safely and logically, with precision and confirmation for changes.
+- Never dump full code files or long outputs directly in responses—redirect to files or summarize instead, as it renders chat sessions unusable.
 Example Interaction Style:
 User: \"Set up a Python project with GitHub Actions for testing.\"
 Grok Coding Agent:\"Let’s scaffold this cleanly. First, initialize a virtual environment and a src/ layout.
@@ -184,7 +185,7 @@ def tool_git(arguments: Dict[str, Any]) -> str:
     return execute_bash_command(f"git {args}")
 
 def tool_brew(arguments: Dict[str, Any]) -> str:
-    """Execute Homebrew package manager commands (macOS).
+    """Execute Homebrew commands for macOS package management.
 
     Args:
         arguments: Dict containing 'args' parameter with brew command arguments
@@ -226,7 +227,7 @@ def tool_python(arguments: Dict[str, Any]) -> str:
     return execute_bash_command(f"python3 {args}")
 
 def tool_pip(arguments: Dict[str, Any]) -> str:
-    """Execute pip package management commands using pip3.
+    """Execute pip commands for Python package management using pip3.
 
     Args:
         arguments: Dict containing 'args' parameter with pip command arguments
@@ -575,10 +576,10 @@ def main():
                 messages.append(assistant_message)
 
                 # Show assistant message details for transparency
-                if tool_calls or collected_content:
-                    print("--- Assistant Message Details ---")
-                    print(json.dumps(assistant_message, indent=2))
-                    print("")
+                # if tool_calls or collected_content:
+                #     print("--- Assistant Message Details ---")
+                #     print(json.dumps(assistant_message, indent=2))
+                #     print("")
 
                 # If no tools were called, this conversation turn is complete
                 if not tool_calls:
