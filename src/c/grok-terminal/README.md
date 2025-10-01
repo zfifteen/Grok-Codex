@@ -64,7 +64,7 @@ make
 
 This will:
 - Check for required dependencies (via parent Makefile)
-- Compile `grok_terminal.c` into the `grok-terminal` executable
+- Compile `grok_terminal.c` into the `bin/grok-terminal` executable
 - Link against libcurl, json-c, and GMP/MPFR
 
 ## Usage
@@ -85,7 +85,7 @@ export XAI_API_KEY='your-xai-api-key-here'
 ### Run the Program
 
 ```bash
-./grok-terminal
+./bin/grok-terminal
 ```
 
 ### Interactive Commands
@@ -242,7 +242,7 @@ Colors are automatically detected based on:
 To disable colors manually:
 ```bash
 export NO_COLOR=1
-./grok-terminal
+./bin/grok-terminal
 ```
 
 ### Terminal Scrollback Buffer

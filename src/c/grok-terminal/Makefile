@@ -6,7 +6,8 @@ include ../Makefile
 
 # Project-specific settings
 PROJECT = grok-terminal
-TARGET = $(PROJECT)
+BIN_DIR = bin
+TARGET = $(BIN_DIR)/$(PROJECT)
 SRC = grok_terminal.c
 
 # Additional dependencies (no new deps beyond parent - using system libs)
@@ -42,6 +43,7 @@ check-deps:
 # Build the executable
 $(TARGET): $(SRC)
 	@echo "Building $(TARGET)..."
+	@mkdir -p $(BIN_DIR)
 	$(CC) $(PROJECT_CFLAGS) -o $(TARGET) $(SRC) $(PROJECT_LIBS)
 	@echo "✓ Build complete: $(TARGET)"
 
@@ -49,14 +51,14 @@ $(TARGET): $(SRC)
 .PHONY: clean
 clean:
 	@echo "Cleaning $(PROJECT)..."
-	rm -f $(TARGET)
+	rm -rf $(BIN_DIR)
 	@echo "✓ Clean complete"
 
 # Test target (runs the demo script)
 .PHONY: test
 test: all
 	@echo "Running demo script..."
-	@./demo.sh
+	@cd scripts && ./demo.sh
 
 # Install dependencies (Ubuntu/Debian)
 .PHONY: install-deps
