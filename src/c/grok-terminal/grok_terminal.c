@@ -668,7 +668,7 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
     size_t total_size = size * nmemb;
     ResponseState *state = (ResponseState *)userdata;
     
-    if (state->size + total_size >= state->capacity) {
+    if (state->size + total_size + 1 > state->capacity) {
         return total_size;  // Buffer full, but continue
     }
     
@@ -709,7 +709,7 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
                             if (text && strlen(text) > 0) {
                                 /* Append to final response */
                                 size_t text_len = strlen(text);
-                                if (state->final_response_size + text_len < MAX_RESPONSE_SIZE) {
+                                if (state->final_response_size + text_len + 1 <= MAX_RESPONSE_SIZE) {
                                     memcpy(state->final_response + state->final_response_size, 
                                            text, text_len);
                                     state->final_response_size += text_len;
@@ -777,7 +777,7 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
                                             }
                                             
                                             /* Expand buffer if needed */
-                                            if (state->tool_call.arguments_size + args_len >= state->tool_call.arguments_capacity) {
+                                            if (state->tool_call.arguments_size + args_len + 1 > state->tool_call.arguments_capacity) {
                                                 state->tool_call.arguments_capacity *= 2;
                                                 char *new_arguments = realloc(state->tool_call.arguments, state->tool_call.arguments_capacity);
                                                 if (!new_arguments) {
@@ -1110,7 +1110,7 @@ char* tool_bash_command(const char *command) {
         size_t line_len = strlen(line);
         
         /* Expand buffer if needed */
-        if (size + line_len >= capacity) {
+        if (size + line_len + 1 > capacity) {
             capacity *= 2;
             char *new_output = realloc(output, capacity);
             if (!new_output) {
