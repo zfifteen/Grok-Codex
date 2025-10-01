@@ -218,6 +218,70 @@ make check-deps
 - **No Threads**: Uses synchronous curl for simplicity
 - **Minimal Allocations**: Fixed-size buffers where possible
 
+## Terminal Configuration
+
+### Output Formatting
+
+The terminal implements structured output formatting for optimal readability:
+
+- **Maximum Width**: 190 columns per line (with automatic wrapping)
+- **Line Limit**: 50 lines per response block to prevent excessive scrolling
+- **ANSI Colors**: Color-coded output for better visual comprehension:
+  - **Green**: Success messages (e.g., "File written successfully")
+  - **Red**: Error messages (e.g., "Cannot open file")
+  - **Blue**: System information (e.g., "Tool call: bash")
+  - **Yellow**: Warnings (e.g., "Output truncated at 50 lines")
+
+### Color Support
+
+Colors are automatically detected based on:
+- `TERM` environment variable (checks for color-capable terminals)
+- `isatty()` verification (ensures output is to a terminal, not a file)
+- `NO_COLOR` environment variable (set to disable colors)
+
+To disable colors manually:
+```bash
+export NO_COLOR=1
+./grok-terminal
+```
+
+### Terminal Scrollback Buffer
+
+For long-running sessions with extensive output, it's recommended to configure your terminal emulator with a large scrollback buffer:
+
+#### macOS Terminal.app
+1. Open Terminal → Preferences
+2. Select your profile
+3. Go to the "Window" tab
+4. Set "Scrollback: Limit to available memory" or set to **10,000 lines**
+
+#### iTerm2
+1. Open iTerm2 → Preferences
+2. Go to Profiles → Terminal
+3. Set "Scrollback lines" to **10,000** or "Unlimited scrollback"
+
+#### GNOME Terminal (Linux)
+1. Edit → Preferences
+2. Select your profile
+3. Go to "Scrolling" tab
+4. Set "Scrollback" to **10,000 lines** or check "Unlimited"
+
+#### tmux
+Add to `~/.tmux.conf`:
+```bash
+set-option -g history-limit 10000
+```
+
+#### screen
+Add to `~/.screenrc`:
+```bash
+defscrollback 10000
+```
+
+### Raw Byte Output
+
+The terminal writes response bytes directly to stdout using standard C I/O functions (`fputc`, `fflush`), ensuring that ANSI escape sequences and special characters are properly interpreted by the terminal emulator without intermediate encoding layers.
+
 ## Troubleshooting
 
 ### "Error: libcurl not found"

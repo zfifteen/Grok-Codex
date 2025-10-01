@@ -36,6 +36,17 @@
 #define ROLLING_WINDOW_SIZE 5
 #define MAX_LINE_SIZE 1024
 #define ERROR_MSG_SIZE 256
+#define MAX_OUTPUT_WIDTH 190
+#define MAX_OUTPUT_LINES 50
+
+/* ANSI color codes for terminal output */
+#define ANSI_RESET "\033[0m"
+#define ANSI_GREEN "\033[32m"
+#define ANSI_RED "\033[31m"
+#define ANSI_BLUE "\033[34m"
+#define ANSI_YELLOW "\033[33m"
+#define ANSI_BOLD "\033[1m"
+#define ANSI_DIM "\033[2m"
 
 #define SYSTEM_INSTRUCTION "Agent ModeCore Identity:- Name: Grok Coding Agent- Archetype: Systems-native coding companion- Mission: To act as a seamless bridge between the user’s ideas and their local development environment, leveraging Apple M1 Max with AMX, OSX, bash, Python, and GitHub as first-class tools.- Personality: Pragmatic, precise, and slightly opinionated about best practices. Encourages reproducibility, clean code, and robust diagnostics.Capabilities:- OSX Integration:  * Familiar with macOS filesystem conventions, permissions, and developer tooling (Homebrew, Xcode command-line tools, etc.).  * Proactively issue commands for system setup, package installation, and environment configuration.- Bash Proficiency:  * Fluent in shell scripting, process management, and automation.  * Encourages safe practices (quoting variables, using set -euo pipefail).  * Provides one-liners for quick tasks and structured scripts for repeatable workflows.- Python Development:  * Skilled in writing, debugging, and optimizing Python code.  * Always looks for Makefiles before attempting to compile c code. Always attempts to retrieve configuration and dependencies from Makefiles or other build and configuration artifacts. * Advocates for virtual environments (venv, poetry, pipenv) and reproducible builds.  * Can scaffold projects, write tests, and integrate with CI/CD pipelines.- GitHub Workflow:  * Guides branching strategies (Git Flow, trunk-based, feature branches).  * Helps with pull requests, code reviews, and commit hygiene.  * Can generate .gitignore, GitHub Actions workflows, and release pipelines.Behavioral Traits:- Diagnostic-first mindset: Always checks assumptions, validates commands, and suggests dry-runs before destructive actions.- Adversarial but constructive: Challenges the user to think about edge cases, error handling, and reproducibility.- Empirical: Encourages benchmarking, logging, and measurement rather than guesswork.- Educational: Explains not just what to do, but why—helping the user level up their own skills.Example Interaction Style:User: \"Set up a Python project with GitHub Actions for testing.\"Grok Coding Agent:\"Let’s scaffold this cleanly. First, initialize a virtual environment and a src/ layout. Then add pytest for testing. After that, generate a .github/workflows/test.yml that runs on push and pull requests. Here’s the sequence in bash:mkdir my_project && cd my_projectpython3 -m venv .venvsource .venv/bin/activatepip install pytestmkdir src testsgit initecho \"__pycache__/\" >> .gitignoreAnd here’s a minimal GitHub Actions workflow:name: Python Testson: [push, pull_request]jobs:  test:    runs-on: ubuntu-latest    steps:      - uses: actions/checkout@v3      - uses: actions/setup-python@v4        with:          python-version: '3.11'      - run: pip install pytest      - run: pytestWould you like me to also add linting (flake8 or ruff) so CI enforces style consistency?\"Guiding Principles:- Fail closed, not open: Always assume the safest defaults.- Reproducibility over convenience: Scripts over manual steps.- Transparency: Explains trade-offs and alternatives.- Convenience: You should always find opportunities to perform tasks for the user to reduce human labor. * Never Markdown - Format all output in ANSI color terminal emulation mode, 190 columns. Always limit terminal output to 50 lines as mmore will scroll the screen and the user will not be able to see your output."
 #define INITIAL_HISTORY_CAPACITY 10
@@ -72,6 +83,10 @@ typedef struct {
     /* Tool calling state */
     ToolCallState tool_call;
     int has_tool_call;
+    /* Output formatting state */
+    int output_line_count;
+    int current_line_width;
+    int colors_enabled;
 } ResponseState;
 
 /* Forward declarations */
@@ -111,6 +126,162 @@ char* tool_list_dir(const char *dirpath);
  */
 char* tool_bash_command(const char *command);
 
+/* Check if terminal supports ANSI colors */
+int terminal_supports_colors() {
+    const char *term = getenv("TERM");
+    const char *no_color = getenv("NO_COLOR");
+    
+    /* NO_COLOR environment variable disables colors */
+    if (no_color != NULL && no_color[0] != '\0') {
+        return 0;
+    }
+    
+    /* Check if stdout is a terminal */
+    if (!isatty(STDOUT_FILENO)) {
+        return 0;
+    }
+    
+    /* Check TERM environment variable */
+    if (term == NULL) {
+        return 0;
+    }
+    
+    /* Common terminal types that support colors */
+    if (strstr(term, "color") != NULL ||
+        strstr(term, "xterm") != NULL ||
+        strstr(term, "screen") != NULL ||
+        strstr(term, "tmux") != NULL ||
+        strstr(term, "rxvt") != NULL ||
+        strstr(term, "vt100") != NULL ||
+        strcmp(term, "linux") == 0) {
+        return 1;
+    }
+    
+    return 0;
+}
+
+/* Get color code based on message type, returns empty string if colors disabled */
+const char* get_color_code(int colors_enabled, const char *color_type) {
+    if (!colors_enabled) {
+        return "";
+    }
+    
+    if (strcmp(color_type, "success") == 0) return ANSI_GREEN;
+    if (strcmp(color_type, "error") == 0) return ANSI_RED;
+    if (strcmp(color_type, "system") == 0) return ANSI_BLUE;
+    if (strcmp(color_type, "warning") == 0) return ANSI_YELLOW;
+    if (strcmp(color_type, "reset") == 0) return ANSI_RESET;
+    if (strcmp(color_type, "bold") == 0) return ANSI_BOLD;
+    if (strcmp(color_type, "dim") == 0) return ANSI_DIM;
+    
+    return "";
+}
+
+/* Wrap text to fit within max width */
+void wrap_text(const char *text, int max_width, char *output, size_t output_size) {
+    size_t text_len = strlen(text);
+    size_t output_pos = 0;
+    size_t line_width = 0;
+    
+    for (size_t i = 0; i < text_len && output_pos < output_size - 1; i++) {
+        /* Check for newline in input */
+        if (text[i] == '\n') {
+            output[output_pos++] = '\n';
+            line_width = 0;
+            continue;
+        }
+        
+        /* Check if we need to wrap */
+        if (line_width >= (size_t)max_width) {
+            /* Look back for a space to break at */
+            int found_space = 0;
+            for (int j = output_pos - 1; j >= 0 && output_pos - j < 20; j--) {
+                if (output[j] == ' ') {
+                    output[j] = '\n';
+                    found_space = 1;
+                    line_width = output_pos - j - 1;
+                    break;
+                }
+            }
+            
+            /* If no space found, just insert newline */
+            if (!found_space && output_pos < output_size - 1) {
+                output[output_pos++] = '\n';
+                line_width = 0;
+            }
+        }
+        
+        output[output_pos++] = text[i];
+        line_width++;
+    }
+    
+    output[output_pos] = '\0';
+}
+
+/* Print text with line counting and width limiting, returns 1 if line limit exceeded */
+int print_with_limits(ResponseState *state, const char *text) {
+    /* Check if we've reached line limit */
+    if (state->output_line_count >= MAX_OUTPUT_LINES) {
+        /* Print truncation message once */
+        if (state->output_line_count == MAX_OUTPUT_LINES) {
+            printf("%s\n[Output truncated at %d lines. Response continues but is not displayed.]%s\n",
+                   get_color_code(state->colors_enabled, "warning"),
+                   MAX_OUTPUT_LINES,
+                   get_color_code(state->colors_enabled, "reset"));
+            state->output_line_count++;
+        }
+        return 1;
+    }
+    
+    /* Process text character by character to track width and lines */
+    size_t text_len = strlen(text);
+    for (size_t i = 0; i < text_len; i++) {
+        char c = text[i];
+        
+        /* Handle newline */
+        if (c == '\n') {
+            fputc(c, stdout);
+            state->output_line_count++;
+            state->current_line_width = 0;
+            
+            /* Check line limit after each newline */
+            if (state->output_line_count >= MAX_OUTPUT_LINES) {
+                printf("%s[Output truncated at %d lines. Response continues but is not displayed.]%s\n",
+                       get_color_code(state->colors_enabled, "warning"),
+                       MAX_OUTPUT_LINES,
+                       get_color_code(state->colors_enabled, "reset"));
+                state->output_line_count++;
+                return 1;
+            }
+            continue;
+        }
+        
+        /* Check if we need to wrap to next line */
+        if (state->current_line_width >= MAX_OUTPUT_WIDTH) {
+            fputc('\n', stdout);
+            state->output_line_count++;
+            state->current_line_width = 0;
+            
+            /* Check line limit after wrapping */
+            if (state->output_line_count >= MAX_OUTPUT_LINES) {
+                printf("%s[Output truncated at %d lines. Response continues but is not displayed.]%s\n",
+                       get_color_code(state->colors_enabled, "warning"),
+                       MAX_OUTPUT_LINES,
+                       get_color_code(state->colors_enabled, "reset"));
+                state->output_line_count++;
+                return 1;
+            }
+        }
+        
+        /* Print character and update width (simple character count, not true width) */
+        fputc(c, stdout);
+        state->current_line_width++;
+    }
+    
+    fflush(stdout);
+    return 0;
+}
+
 /* Initialize response state */
 void init_response_state(ResponseState *state) {
     state->data = malloc(MAX_RESPONSE_SIZE);
@@ -138,6 +309,10 @@ void init_response_state(ResponseState *state) {
     state->tool_call.arguments_capacity = 0;
     state->tool_call.arguments_size = 0;
     state->has_tool_call = 0;
+    /* Initialize output formatting state */
+    state->output_line_count = 0;
+    state->current_line_width = 0;
+    state->colors_enabled = terminal_supports_colors();
 }
 
 /* Free response state */
@@ -409,9 +584,8 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
                                     state->final_response[state->final_response_size] = '\0';
                                 }
                                 
-                                /* Print incrementally for real-time feel */
-                                printf("%s", text);
-                                fflush(stdout);
+                                /* Print incrementally with line and width limits */
+                                print_with_limits(state, text);
                             }
                         }
                         
@@ -601,7 +775,10 @@ int send_grok_request(const char *api_key, ConversationHistory *history) {
     
     /* Handle tool calls if present */
     if (state.has_tool_call && state.tool_call.function_name && state.tool_call.arguments) {
-        printf("[Tool call: %s]\n", state.tool_call.function_name);
+        printf("%s[Tool call: %s]%s\n", 
+               get_color_code(state.colors_enabled, "system"),
+               state.tool_call.function_name,
+               get_color_code(state.colors_enabled, "reset"));
         
         /* Execute tool */
         char *tool_result = execute_tool(state.tool_call.function_name, state.tool_call.arguments);
@@ -1017,22 +1194,42 @@ int main(int argc __attribute__((unused)), char *argv[] __attribute__((unused)))
     }
     
     if (!api_key) {
-        fprintf(stderr, "Error: GROK_API_KEY or XAI_API_KEY environment variable not set\n");
+        fprintf(stderr, "%sError: GROK_API_KEY or XAI_API_KEY environment variable not set%s\n",
+                terminal_supports_colors() ? ANSI_RED : "",
+                terminal_supports_colors() ? ANSI_RESET : "");
         fprintf(stderr, "Export your API key: export GROK_API_KEY='your-key-here'\n");
         curl_global_cleanup();
         return 1;
     }
     
+    /* Check if colors are enabled */
+    int colors_enabled = terminal_supports_colors();
+    
     /* Display welcome message */
-    printf("=== Grok Terminal ===\n");
-    printf("Connected to xAI API (model: %s)\n", MODEL);
+    printf("%s=== Grok Terminal ===%s\n", 
+           get_color_code(colors_enabled, "bold"),
+           get_color_code(colors_enabled, "reset"));
+    printf("%sConnected to xAI API (model: %s)%s\n", 
+           get_color_code(colors_enabled, "system"),
+           MODEL,
+           get_color_code(colors_enabled, "reset"));
     printf("Type 'exit' to quit, or enter your message.\n");
-    printf("The AI can now autonomously use tools (read_file, write_file, list_dir, bash).\n\n");
+    printf("The AI can now autonomously use tools (read_file, write_file, list_dir, bash).\n");
+    printf("%sOutput format: Max %d columns, %d lines per response%s\n", 
+           get_color_code(colors_enabled, "dim"),
+           MAX_OUTPUT_WIDTH, MAX_OUTPUT_LINES,
+           get_color_code(colors_enabled, "reset"));
+    printf("%sColors: %s%s\n\n",
+           get_color_code(colors_enabled, "dim"),
+           colors_enabled ? "Enabled" : "Disabled (set TERM or unset NO_COLOR)",
+           get_color_code(colors_enabled, "reset"));
     
     /* Initialize conversation history */
     ConversationHistory *history = init_conversation_history();
     if (!history) {
-        fprintf(stderr, "Error: Failed to initialize conversation history\n");
+        fprintf(stderr, "%sError: Failed to initialize conversation history%s\n",
+                get_color_code(colors_enabled, "error"),
+                get_color_code(colors_enabled, "reset"));
         curl_global_cleanup();
         return 1;
     }
