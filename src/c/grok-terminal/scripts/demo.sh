@@ -24,9 +24,11 @@ if [ -z "$GROK_API_KEY" ] && [ -z "$XAI_API_KEY" ]; then
 fi
 
 # Check if executable exists
-if [ ! -f "./grok-terminal" ]; then
+if [ ! -f "../bin/grok-terminal" ]; then
     echo "Building grok-terminal..."
+    cd ..
     make
+    cd scripts
     echo ""
 fi
 
@@ -67,28 +69,28 @@ echo "=== Automated Demo (non-interactive) ==="
 echo ""
 
 echo "1. Testing file read operation:"
-./grok-terminal <<EOF
+../bin/grok-terminal <<EOF
 read_file:$DEMO_DIR/test.txt
 exit
 EOF
 
 echo ""
 echo "2. Testing directory listing:"
-./grok-terminal <<EOF
+../bin/grok-terminal <<EOF
 list_dir:$DEMO_DIR
 exit
 EOF
 
 echo ""
 echo "3. Testing bash command execution:"
-./grok-terminal <<EOF
+../bin/grok-terminal <<EOF
 bash:echo 'Current date:'; date
 exit
 EOF
 
 echo ""
 echo "4. Testing file write operation:"
-./grok-terminal <<EOF
+../bin/grok-terminal <<EOF
 write_file:$DEMO_DIR/new_file.txt:Content created by Grok Terminal
 exit
 EOF
@@ -107,12 +109,12 @@ echo ""
 echo "=== Demo Complete ==="
 echo ""
 echo "To use Grok Terminal interactively, run:"
-echo "  cd $SCRIPT_DIR"
-echo "  ./grok-terminal"
+echo "  cd $SCRIPT_DIR/.."
+echo "  ./bin/grok-terminal"
 echo ""
 echo "Or with the Grok API (requires valid API key):"
 echo "  export GROK_API_KEY='your-key-here'"
-echo "  ./grok-terminal"
+echo "  ./bin/grok-terminal"
 echo ""
 echo "Note: The Grok API streaming functionality requires a valid API key."
 echo "      The demo above only tests the local filesystem and bash commands."
