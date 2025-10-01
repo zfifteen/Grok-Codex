@@ -3,7 +3,7 @@
 
 # Compiler settings
 CC ?= gcc
-CFLAGS ?= -Wall -Wextra -O2 -std=c11
+CFLAGS ?= -Wall -Wextra -Wpedantic -Wshadow -Wconversion -O2 -std=c11
 
 # Common dependencies (GMP/MPFR for large number operations)
 COMMON_LIBS = -lgmp -lmpfr
@@ -34,17 +34,17 @@ clean-all:
 	@echo "✓ Clean complete"
 
 # Help target
-.PHONY: help
-help:
+.PHONY: parent-help
+parent-help:
 	@echo "Parent Makefile for C projects"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  check-tools   - Verify required tools are installed"
 	@echo "  shared-libs   - Build shared libraries"
 	@echo "  clean-all     - Clean all subdirectories"
-	@echo "  help          - Show this help message"
+	@echo "  parent-help   - Show this help message"
 	@echo ""
 	@echo "Common variables:"
 	@echo "  CC            - C compiler (default: gcc)"
-	@echo "  CFLAGS        - Compiler flags (default: -Wall -Wextra -O2 -std=c11)"
+	@echo "  CFLAGS        - Compiler flags (default: -Wall -Wextra -Wpedantic -Wshadow -Wconversion -O2 -std=c11)"
 	@echo "  COMMON_LIBS   - Common libraries: $(COMMON_LIBS)"

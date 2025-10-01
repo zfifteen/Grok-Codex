@@ -27,6 +27,7 @@
 #include <sys/wait.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <sys/select.h>
 #include <gmp.h>
 
 #define API_URL "https://api.x.ai/v1/chat/completions"
