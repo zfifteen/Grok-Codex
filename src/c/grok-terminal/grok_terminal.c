@@ -841,6 +841,13 @@ char* tool_read_file(const char *filepath) {
     /* Get file size */
     fseek(fp, 0, SEEK_END);
     long size = ftell(fp);
+    if (size < 0) {
+        fclose(fp);
+        char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
+        snprintf(error, ERROR_MSG_SIZE, "Error: Failed to determine file size for '%s': %s", filepath, strerror(errno));
+        return error;
+    }
     fseek(fp, 0, SEEK_SET);
     
     /* Read file into buffer */
