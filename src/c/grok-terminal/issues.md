@@ -609,3 +609,30 @@ Code has high complexity in key areas (particularly `write_callback()`). Refacto
 
 **Review Completed**: 2025-09-30
 **Reviewer**: Claude Code (Automated Code Analysis)
+
+---
+
+## Fixed Issues
+
+### Fix 2025-10-01: Memory Leak in Tool Callback
+
+**Issue**: Direct array assignment in tool result message handling (line 593) bypassed reallocation logic, causing memory corruption when history array was full.
+
+**Root Cause**: 
+```c
+// Problematic code:
+struct json_object *tool_msg = json_object_new_object();
+json_object_object_add(tool_msg, "role", json_object_new_string("tool"));
+json_object_object_add(tool_msg, "tool_call_id", json_object_new_string(state.tool_call.tool_call_id));
+json_object_object_add(tool_msg, "content", json_object_new_string(tool_result));
+history->messages[history->count++] = tool_msg;  // NO REALLOC CHECK
+```
+
+**Fix Applied**:
+- Extended `add_message_to_history()` to support `tool_call_id` parameter
+- Replaced manual message creation with proper function call:
+```c
+add_message_to_history(history, "tool", tool_result, NULL, state.tool_call.tool_call_id);
+```
+
+**Status**: ✅ Fixed and verified (build successful, no memory corruption)
