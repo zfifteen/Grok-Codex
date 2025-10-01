@@ -125,6 +125,34 @@ char* tool_list_dir(const char *dirpath);
  * The caller is responsible for freeing the returned string.
  */
 char* tool_bash_command(const char *command);
+/**
+ * Executes git command with arguments.
+ * 
+ * Returns a dynamically allocated string containing the command output.
+ * The caller is responsible for freeing the returned string.
+ */
+char* tool_git_command(const char *args);
+/**
+ * Executes brew command with arguments.
+ * 
+ * Returns a dynamically allocated string containing the command output.
+ * The caller is responsible for freeing the returned string.
+ */
+char* tool_brew_command(const char *args);
+/**
+ * Executes python3 command with arguments.
+ * 
+ * Returns a dynamically allocated string containing the command output.
+ * The caller is responsible for freeing the returned string.
+ */
+char* tool_python_command(const char *args);
+/**
+ * Executes pip3 command with arguments.
+ * 
+ * Returns a dynamically allocated string containing the command output.
+ * The caller is responsible for freeing the returned string.
+ */
+char* tool_pip_command(const char *args);
 
 /* Check if terminal supports ANSI colors */
 int terminal_supports_colors() {
@@ -527,6 +555,110 @@ struct json_object* create_tools_array() {
     json_object_object_add(bash_func, "parameters", bash_params);
     json_object_object_add(bash_tool, "function", bash_func);
     json_object_array_add(tools, bash_tool);
+    
+    /* Tool 5: git */
+    struct json_object *git_tool = json_object_new_object();
+    json_object_object_add(git_tool, "type", json_object_new_string("function"));
+    
+    struct json_object *git_func = json_object_new_object();
+    json_object_object_add(git_func, "name", json_object_new_string("git"));
+    json_object_object_add(git_func, "description", json_object_new_string("Execute git commands for version control operations (status, commit, branch, etc.) with structured inputs/outputs for reliable GitHub integration"));
+    
+    struct json_object *git_params = json_object_new_object();
+    json_object_object_add(git_params, "type", json_object_new_string("object"));
+    
+    struct json_object *git_props = json_object_new_object();
+    struct json_object *git_args_prop = json_object_new_object();
+    json_object_object_add(git_args_prop, "type", json_object_new_string("string"));
+    json_object_object_add(git_args_prop, "description", json_object_new_string("Git command arguments (e.g., 'status', 'log --oneline -10', 'branch -a')"));
+    json_object_object_add(git_props, "args", git_args_prop);
+    json_object_object_add(git_params, "properties", git_props);
+    
+    struct json_object *git_required = json_object_new_array();
+    json_object_array_add(git_required, json_object_new_string("args"));
+    json_object_object_add(git_params, "required", git_required);
+    
+    json_object_object_add(git_func, "parameters", git_params);
+    json_object_object_add(git_tool, "function", git_func);
+    json_object_array_add(tools, git_tool);
+    
+    /* Tool 6: brew */
+    struct json_object *brew_tool = json_object_new_object();
+    json_object_object_add(brew_tool, "type", json_object_new_string("function"));
+    
+    struct json_object *brew_func = json_object_new_object();
+    json_object_object_add(brew_func, "name", json_object_new_string("brew"));
+    json_object_object_add(brew_func, "description", json_object_new_string("Execute Homebrew commands for macOS package management (install, upgrade, list, info, etc.) enabling proactive OSX setup without manual bash commands"));
+    
+    struct json_object *brew_params = json_object_new_object();
+    json_object_object_add(brew_params, "type", json_object_new_string("object"));
+    
+    struct json_object *brew_props = json_object_new_object();
+    struct json_object *brew_args_prop = json_object_new_object();
+    json_object_object_add(brew_args_prop, "type", json_object_new_string("string"));
+    json_object_object_add(brew_args_prop, "description", json_object_new_string("Brew command arguments (e.g., 'install package', 'upgrade', 'list', 'info package')"));
+    json_object_object_add(brew_props, "args", brew_args_prop);
+    json_object_object_add(brew_params, "properties", brew_props);
+    
+    struct json_object *brew_required = json_object_new_array();
+    json_object_array_add(brew_required, json_object_new_string("args"));
+    json_object_object_add(brew_params, "required", brew_required);
+    
+    json_object_object_add(brew_func, "parameters", brew_params);
+    json_object_object_add(brew_tool, "function", brew_func);
+    json_object_array_add(tools, brew_tool);
+    
+    /* Tool 7: python */
+    struct json_object *python_tool = json_object_new_object();
+    json_object_object_add(python_tool, "type", json_object_new_string("function"));
+    
+    struct json_object *python_func = json_object_new_object();
+    json_object_object_add(python_func, "name", json_object_new_string("python"));
+    json_object_object_add(python_func, "description", json_object_new_string("Execute Python scripts or modules with clear args and output capture for precise Python development and testing"));
+    
+    struct json_object *python_params = json_object_new_object();
+    json_object_object_add(python_params, "type", json_object_new_string("object"));
+    
+    struct json_object *python_props = json_object_new_object();
+    struct json_object *python_args_prop = json_object_new_object();
+    json_object_object_add(python_args_prop, "type", json_object_new_string("string"));
+    json_object_object_add(python_args_prop, "description", json_object_new_string("Python command arguments (e.g., 'script.py', '-m module', '-c \"print(1+1)\"', '--version')"));
+    json_object_object_add(python_props, "args", python_args_prop);
+    json_object_object_add(python_params, "properties", python_props);
+    
+    struct json_object *python_required = json_object_new_array();
+    json_object_array_add(python_required, json_object_new_string("args"));
+    json_object_object_add(python_params, "required", python_required);
+    
+    json_object_object_add(python_func, "parameters", python_params);
+    json_object_object_add(python_tool, "function", python_func);
+    json_object_array_add(tools, python_tool);
+    
+    /* Tool 8: pip */
+    struct json_object *pip_tool = json_object_new_object();
+    json_object_object_add(pip_tool, "type", json_object_new_string("function"));
+    
+    struct json_object *pip_func = json_object_new_object();
+    json_object_object_add(pip_func, "name", json_object_new_string("pip"));
+    json_object_object_add(pip_func, "description", json_object_new_string("Execute pip commands for Python package management in virtual environments with direct calls for dependency resolution and CI/CD"));
+    
+    struct json_object *pip_params = json_object_new_object();
+    json_object_object_add(pip_params, "type", json_object_new_string("object"));
+    
+    struct json_object *pip_props = json_object_new_object();
+    struct json_object *pip_args_prop = json_object_new_object();
+    json_object_object_add(pip_args_prop, "type", json_object_new_string("string"));
+    json_object_object_add(pip_args_prop, "description", json_object_new_string("Pip command arguments (e.g., 'install package', 'list', 'show package', 'freeze')"));
+    json_object_object_add(pip_props, "args", pip_args_prop);
+    json_object_object_add(pip_params, "properties", pip_props);
+    
+    struct json_object *pip_required = json_object_new_array();
+    json_object_array_add(pip_required, json_object_new_string("args"));
+    json_object_object_add(pip_params, "required", pip_required);
+    
+    json_object_object_add(pip_func, "parameters", pip_params);
+    json_object_object_add(pip_tool, "function", pip_func);
+    json_object_array_add(tools, pip_tool);
     
     return tools;
 }
@@ -1030,6 +1162,106 @@ char* tool_bash_command(const char *command) {
     return output;
 }
 
+/* Execute git command with args and return output */
+char* tool_git_command(const char *args) {
+    if (!args || strlen(args) == 0) {
+        char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
+        snprintf(error, ERROR_MSG_SIZE, "Error: Git command arguments cannot be empty");
+        return error;
+    }
+    
+    /* Build command: git <args> */
+    size_t cmd_len = strlen("git ") + strlen(args) + 1;
+    char *full_cmd = malloc(cmd_len);
+    if (!full_cmd) {
+        char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
+        snprintf(error, ERROR_MSG_SIZE, "Error: Memory allocation failed");
+        return error;
+    }
+    snprintf(full_cmd, cmd_len, "git %s", args);
+    
+    char *result = tool_bash_command(full_cmd);
+    free(full_cmd);
+    return result;
+}
+
+/* Execute brew command with args and return output */
+char* tool_brew_command(const char *args) {
+    if (!args || strlen(args) == 0) {
+        char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
+        snprintf(error, ERROR_MSG_SIZE, "Error: Brew command arguments cannot be empty");
+        return error;
+    }
+    
+    /* Build command: brew <args> */
+    size_t cmd_len = strlen("brew ") + strlen(args) + 1;
+    char *full_cmd = malloc(cmd_len);
+    if (!full_cmd) {
+        char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
+        snprintf(error, ERROR_MSG_SIZE, "Error: Memory allocation failed");
+        return error;
+    }
+    snprintf(full_cmd, cmd_len, "brew %s", args);
+    
+    char *result = tool_bash_command(full_cmd);
+    free(full_cmd);
+    return result;
+}
+
+/* Execute python command with args and return output */
+char* tool_python_command(const char *args) {
+    if (!args || strlen(args) == 0) {
+        char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
+        snprintf(error, ERROR_MSG_SIZE, "Error: Python command arguments cannot be empty");
+        return error;
+    }
+    
+    /* Build command: python3 <args> (prefer python3 for compatibility) */
+    size_t cmd_len = strlen("python3 ") + strlen(args) + 1;
+    char *full_cmd = malloc(cmd_len);
+    if (!full_cmd) {
+        char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
+        snprintf(error, ERROR_MSG_SIZE, "Error: Memory allocation failed");
+        return error;
+    }
+    snprintf(full_cmd, cmd_len, "python3 %s", args);
+    
+    char *result = tool_bash_command(full_cmd);
+    free(full_cmd);
+    return result;
+}
+
+/* Execute pip command with args and return output */
+char* tool_pip_command(const char *args) {
+    if (!args || strlen(args) == 0) {
+        char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
+        snprintf(error, ERROR_MSG_SIZE, "Error: Pip command arguments cannot be empty");
+        return error;
+    }
+    
+    /* Build command: pip3 <args> (prefer pip3 for compatibility) */
+    size_t cmd_len = strlen("pip3 ") + strlen(args) + 1;
+    char *full_cmd = malloc(cmd_len);
+    if (!full_cmd) {
+        char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
+        snprintf(error, ERROR_MSG_SIZE, "Error: Memory allocation failed");
+        return error;
+    }
+    snprintf(full_cmd, cmd_len, "pip3 %s", args);
+    
+    char *result = tool_bash_command(full_cmd);
+    free(full_cmd);
+    return result;
+}
+
 /* Execute tool and return result */
 char* execute_tool(const char *tool_name, const char *arguments_json) {
     /* Parse arguments JSON */
@@ -1082,6 +1314,46 @@ char* execute_tool(const char *tool_name, const char *arguments_json) {
             result = tool_bash_command(command);
         } else {
             result = strdup("Error: Missing 'command' parameter");
+            if (!result) result = NULL;
+        }
+    }
+    else if (strcmp(tool_name, "git") == 0) {
+        struct json_object *args_obj;
+        if (json_object_object_get_ex(args, "args", &args_obj)) {
+            const char *git_args = json_object_get_string(args_obj);
+            result = tool_git_command(git_args);
+        } else {
+            result = strdup("Error: Missing 'args' parameter");
+            if (!result) result = NULL;
+        }
+    }
+    else if (strcmp(tool_name, "brew") == 0) {
+        struct json_object *args_obj;
+        if (json_object_object_get_ex(args, "args", &args_obj)) {
+            const char *brew_args = json_object_get_string(args_obj);
+            result = tool_brew_command(brew_args);
+        } else {
+            result = strdup("Error: Missing 'args' parameter");
+            if (!result) result = NULL;
+        }
+    }
+    else if (strcmp(tool_name, "python") == 0) {
+        struct json_object *args_obj;
+        if (json_object_object_get_ex(args, "args", &args_obj)) {
+            const char *python_args = json_object_get_string(args_obj);
+            result = tool_python_command(python_args);
+        } else {
+            result = strdup("Error: Missing 'args' parameter");
+            if (!result) result = NULL;
+        }
+    }
+    else if (strcmp(tool_name, "pip") == 0) {
+        struct json_object *args_obj;
+        if (json_object_object_get_ex(args, "args", &args_obj)) {
+            const char *pip_args = json_object_get_string(args_obj);
+            result = tool_pip_command(pip_args);
+        } else {
+            result = strdup("Error: Missing 'args' parameter");
             if (!result) result = NULL;
         }
     }

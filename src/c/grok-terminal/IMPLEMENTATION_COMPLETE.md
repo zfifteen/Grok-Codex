@@ -60,18 +60,20 @@ All requirements from the issue have been successfully implemented. The Grok Ter
 ## Code Changes Summary
 
 ### Files Modified
-- `src/c/grok-terminal/grok_terminal.c`: Complete rewrite of tool handling
+- `src/c/grok-terminal/grok_terminal.c`: Complete rewrite of tool handling + added high-priority tools
 
 ### Files Created
 - `src/c/grok-terminal/TOOL_CALLING_ARCHITECTURE.md`: Architecture documentation
 - `src/c/grok-terminal/test_tool_calling.md`: Testing guide
 - `src/c/grok-terminal/IMPLEMENTATION_COMPLETE.md`: This file
+- `src/c/grok-terminal/test_new_tools.sh`: Test script for new tools
 
-### Statistics
-- **Lines Added**: ~570
+### Statistics (Latest Update)
+- **Lines Added**: ~840 (original 570 + 270 for new tools)
 - **Lines Removed**: ~50
-- **Net Change**: +520 lines
-- **Functions Added**: 10
+- **Net Change**: +790 lines
+- **Functions Added**: 14 (original 10 + 4 new tool functions)
+- **Tools Available**: 8 (read_file, write_file, list_dir, bash, git, brew, python, pip)
 - **Structures Added**: 2
 - **Build Status**: ✅ Success
 
@@ -100,13 +102,17 @@ typedef struct {
 1. `init_conversation_history()` - Initialize conversation
 2. `add_message_to_history()` - Add messages
 3. `free_conversation_history()` - Cleanup
-4. `create_tools_array()` - Generate OpenAI tool definitions
+4. `create_tools_array()` - Generate OpenAI tool definitions (now includes 8 tools)
 5. `tool_read_file()` - File reading as string
 6. `tool_write_file()` - File writing with result
 7. `tool_list_dir()` - Directory listing as string
 8. `tool_bash_command()` - Command execution with output
-9. `execute_tool()` - Tool dispatcher
-10. Enhanced `send_grok_request()` - Now handles tool calls
+9. `tool_git_command()` - Git command execution (NEW)
+10. `tool_brew_command()` - Brew command execution (NEW)
+11. `tool_python_command()` - Python command execution (NEW)
+12. `tool_pip_command()` - Pip command execution (NEW)
+13. `execute_tool()` - Tool dispatcher (updated for 8 tools)
+14. Enhanced `send_grok_request()` - Now handles tool calls
 
 ### Modified Functions
 1. `write_callback()` - Now detects tool_calls in delta
@@ -119,7 +125,7 @@ typedef struct {
 
 ## Tool Definitions
 
-All 4 tools defined according to OpenAI Function Calling spec:
+All 8 tools defined according to OpenAI Function Calling spec:
 
 ### 1. read_file
 ```json
@@ -150,6 +156,30 @@ All 4 tools defined according to OpenAI Function Calling spec:
 ### 4. bash
 - Parameters: command
 - Returns: Command output with exit code
+
+### 5. git (NEW)
+- Parameters: args (git command arguments)
+- Returns: Git command output with exit code
+- Purpose: Direct git operations for version control (status, commit, branch, etc.)
+- Benefit: Structured inputs/outputs, avoids shell parsing for reliable GitHub integration
+
+### 6. brew (NEW)
+- Parameters: args (brew command arguments)
+- Returns: Brew command output with exit code
+- Purpose: macOS package management (install, upgrade, list, info)
+- Benefit: Enables proactive OSX setup without manual bash commands
+
+### 7. python (NEW)
+- Parameters: args (python command arguments)
+- Returns: Python command output with exit code
+- Purpose: Run Python scripts or modules with clear args
+- Benefit: Improved Python development and testing precision
+
+### 8. pip (NEW)
+- Parameters: args (pip command arguments)
+- Returns: Pip command output with exit code
+- Purpose: Python package management in virtual environments
+- Benefit: Direct calls for dependency resolution and CI/CD
 
 ## Before vs After
 
