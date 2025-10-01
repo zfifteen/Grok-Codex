@@ -3,6 +3,7 @@
 
 import json
 import os
+import select
 import subprocess
 import sys
 from typing import List, Dict, Any
@@ -437,6 +438,7 @@ def main():
     print(f"Connected to xAI API (model: {MODEL})")
     print("Type 'exit' to quit, or enter your message.")
     print("The AI can use tools: read_file, write_file, list_dir, bash, git, brew, python, pip.")
+    print("Type 'stop' during AI response to interrupt it.")
     print("")
 
     # Initialize conversation with system instruction
@@ -490,6 +492,7 @@ def main():
                 # Initialize collectors for streaming response content and tool calls
                 collected_content = ""
                 tool_calls = []
+                interrupted = False
 
                 # Process streaming response chunks
                 for chunk in response:
@@ -500,6 +503,7 @@ def main():
                         print(wrapped, end="")
                         sys.stdout.flush()
                         collected_content += content
+                    
                     if chunk.choices[0].delta.tool_calls:
                         # Accumulate tool calls (streaming may send deltas)
                         for tc_delta in chunk.choices[0].delta.tool_calls:
@@ -514,8 +518,23 @@ def main():
                                 tool_calls[tc_delta.index]["function"]["name"] = tc_delta.function.name
                             if tc_delta.function and tc_delta.function.arguments:
                                 tool_calls[tc_delta.index]["function"]["arguments"] += tc_delta.function.arguments
+                    
+                    # Check for user interruption
+                    if select.select([sys.stdin], [], [], 0)[0]:
+                        try:
+                            stop_input = sys.stdin.readline().strip().lower()
+                            if stop_input == 'stop':
+                                print("\n[Response interrupted by user]")
+                                interrupted = True
+                                break
+                        except:
+                            pass  # Ignore read errors
 
                 print("\n")  # End the AI response output
+
+                if interrupted:
+                    # Skip adding message and tools, go back to user input
+                    break
 
                 # Add assistant message to conversation history
                 assistant_message = {"role": "assistant"}
