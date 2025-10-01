@@ -114,11 +114,20 @@ char* tool_bash_command(const char *command);
 /* Initialize response state */
 void init_response_state(ResponseState *state) {
     state->data = malloc(MAX_RESPONSE_SIZE);
+    if (!state->data) {
+        fprintf(stderr, "Error: Failed to allocate response buffer\n");
+        exit(1);
+    }
     state->size = 0;
     state->capacity = MAX_RESPONSE_SIZE;
     state->verbose_line_count = 0;
     state->verbose_total_lines = 0;
     state->final_response = malloc(MAX_RESPONSE_SIZE);
+    if (!state->final_response) {
+        free(state->data);
+        fprintf(stderr, "Error: Failed to allocate final response buffer\n");
+        exit(1);
+    }
     state->final_response_size = 0;
     state->in_verbose_section = 0;
     memset(state->verbose_buffer, 0, sizeof(state->verbose_buffer));
@@ -168,7 +177,12 @@ void add_message_to_history(ConversationHistory *history, const char *role, cons
     /* Reallocate if needed */
     if (history->count >= history->capacity) {
         history->capacity *= 2;
-        history->messages = realloc(history->messages, sizeof(struct json_object*) * history->capacity);
+        struct json_object **new_messages = realloc(history->messages, sizeof(struct json_object*) * history->capacity);
+        if (!new_messages) {
+            fprintf(stderr, "Error: Failed to reallocate conversation history\n");
+            exit(1);
+        }
+        history->messages = new_messages;
     }
     
     /* Create message object */
@@ -414,6 +428,10 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
                                     const char *id = json_object_get_string(id_obj);
                                     if (id && !state->tool_call.tool_call_id) {
                                         state->tool_call.tool_call_id = strdup(id);
+                                        if (!state->tool_call.tool_call_id) {
+                                            fprintf(stderr, "Error: Failed to allocate tool call ID\n");
+                                            return 0;
+                                        }
                                     }
                                 }
                                 
@@ -426,6 +444,10 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
                                         const char *name = json_object_get_string(name_obj);
                                         if (name && !state->tool_call.function_name) {
                                             state->tool_call.function_name = strdup(name);
+                                            if (!state->tool_call.function_name) {
+                                                fprintf(stderr, "Error: Failed to allocate function name\n");
+                                                return 0;
+                                            }
                                         }
                                     }
                                     
@@ -440,6 +462,10 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
                                             if (!state->tool_call.arguments) {
                                                 state->tool_call.arguments_capacity = 1024;
                                                 state->tool_call.arguments = malloc(state->tool_call.arguments_capacity);
+                                                if (!state->tool_call.arguments) {
+                                                    fprintf(stderr, "Error: Failed to allocate arguments buffer\n");
+                                                    return 0;
+                                                }
                                                 state->tool_call.arguments_size = 0;
                                                 state->tool_call.arguments[0] = '\0';
                                             }
@@ -447,7 +473,12 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
                                             /* Expand buffer if needed */
                                             if (state->tool_call.arguments_size + args_len >= state->tool_call.arguments_capacity) {
                                                 state->tool_call.arguments_capacity *= 2;
-                                                state->tool_call.arguments = realloc(state->tool_call.arguments, state->tool_call.arguments_capacity);
+                                                char *new_arguments = realloc(state->tool_call.arguments, state->tool_call.arguments_capacity);
+                                                if (!new_arguments) {
+                                                    fprintf(stderr, "Error: Failed to reallocate arguments buffer\n");
+                                                    return 0;
+                                                }
+                                                state->tool_call.arguments = new_arguments;
                                             }
                                             
                                             /* Append arguments */
@@ -625,6 +656,7 @@ char* tool_read_file(const char *filepath) {
     FILE *fp = fopen(filepath, "r");
     if (!fp) {
         char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
         snprintf(error, ERROR_MSG_SIZE, "Error: Cannot open file '%s': %s", filepath, strerror(errno));
         return error;
     }
@@ -639,6 +671,7 @@ char* tool_read_file(const char *filepath) {
     if (!content) {
         fclose(fp);
         char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
         snprintf(error, ERROR_MSG_SIZE, "Error: Memory allocation failed for file '%s'", filepath);
         return error;
     }
@@ -655,6 +688,7 @@ char* tool_write_file(const char *filepath, const char *content) {
     FILE *fp = fopen(filepath, "w");
     if (!fp) {
         char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
         snprintf(error, ERROR_MSG_SIZE, "Error: Cannot write to file '%s': %s", filepath, strerror(errno));
         return error;
     }
@@ -663,6 +697,7 @@ char* tool_write_file(const char *filepath, const char *content) {
     fclose(fp);
     
     char *result = malloc(ERROR_MSG_SIZE);
+    if (!result) return NULL;
     snprintf(result, ERROR_MSG_SIZE, "Successfully written %zu bytes to %s", strlen(content), filepath);
     return result;
 }
@@ -672,6 +707,7 @@ char* tool_list_dir(const char *dirpath) {
     DIR *dir = opendir(dirpath);
     if (!dir) {
         char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
         snprintf(error, ERROR_MSG_SIZE, "Error: Cannot open directory '%s': %s", dirpath, strerror(errno));
         return error;
     }
@@ -680,6 +716,15 @@ char* tool_list_dir(const char *dirpath) {
     size_t capacity = 4096;
     size_t size = 0;
     char *listing = malloc(capacity);
+    if (!listing) {
+        closedir(dir);
+        char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) {
+            return NULL;
+        }
+        snprintf(error, ERROR_MSG_SIZE, "Error: Memory allocation failed");
+        return error;
+    }
     
     size += snprintf(listing + size, capacity - size, "Contents of %s:\n", dirpath);
     
@@ -693,7 +738,18 @@ char* tool_list_dir(const char *dirpath) {
             /* Expand buffer if needed */
             if (size + ERROR_MSG_SIZE >= capacity) {
                 capacity *= 2;
-                listing = realloc(listing, capacity);
+                char *new_listing = realloc(listing, capacity);
+                if (!new_listing) {
+                    free(listing);
+                    closedir(dir);
+                    char *error = malloc(ERROR_MSG_SIZE);
+                    if (!error) {
+                        return NULL;
+                    }
+                    snprintf(error, ERROR_MSG_SIZE, "Error: Memory reallocation failed");
+                    return error;
+                }
+                listing = new_listing;
             }
             
             if (S_ISDIR(st.st_mode)) {
@@ -714,6 +770,7 @@ char* tool_bash_command(const char *command) {
     FILE *fp = popen(command, "r");
     if (!fp) {
         char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
         snprintf(error, ERROR_MSG_SIZE, "Error: Failed to execute command: %s", strerror(errno));
         return error;
     }
@@ -722,6 +779,15 @@ char* tool_bash_command(const char *command) {
     size_t capacity = 4096;
     size_t size = 0;
     char *output = malloc(capacity);
+    if (!output) {
+        pclose(fp);
+        char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) {
+            return NULL;
+        }
+        snprintf(error, ERROR_MSG_SIZE, "Error: Memory allocation failed");
+        return error;
+    }
     
     char line[MAX_LINE_SIZE];
     while (fgets(line, sizeof(line), fp)) {
@@ -730,7 +796,18 @@ char* tool_bash_command(const char *command) {
         /* Expand buffer if needed */
         if (size + line_len >= capacity) {
             capacity *= 2;
-            output = realloc(output, capacity);
+            char *new_output = realloc(output, capacity);
+            if (!new_output) {
+                free(output);
+                pclose(fp);
+                char *error = malloc(ERROR_MSG_SIZE);
+                if (!error) {
+                    return NULL;
+                }
+                snprintf(error, ERROR_MSG_SIZE, "Error: Memory reallocation failed");
+                return error;
+            }
+            output = new_output;
         }
         
         memcpy(output + size, line, line_len);
@@ -752,7 +829,17 @@ char* tool_bash_command(const char *command) {
     size_t exit_len = strlen(exit_msg);
     if (size + exit_len >= capacity) {
         capacity = size + exit_len + 1;
-        output = realloc(output, capacity);
+        char *new_output = realloc(output, capacity);
+        if (!new_output) {
+            free(output);
+            char *error = malloc(ERROR_MSG_SIZE);
+            if (!error) {
+                return NULL;
+            }
+            snprintf(error, ERROR_MSG_SIZE, "Error: Memory reallocation failed for exit message");
+            return error;
+        }
+        output = new_output;
     }
     memcpy(output + size, exit_msg, exit_len + 1);
     
@@ -765,6 +852,7 @@ char* execute_tool(const char *tool_name, const char *arguments_json) {
     struct json_object *args = json_tokener_parse(arguments_json);
     if (!args) {
         char *error = malloc(ERROR_MSG_SIZE);
+        if (!error) return NULL;
         snprintf(error, ERROR_MSG_SIZE, "Error: Failed to parse tool arguments JSON");
         return error;
     }
@@ -778,6 +866,7 @@ char* execute_tool(const char *tool_name, const char *arguments_json) {
             result = tool_read_file(filepath);
         } else {
             result = strdup("Error: Missing 'filepath' parameter");
+            if (!result) result = NULL;
         }
     }
     else if (strcmp(tool_name, "write_file") == 0) {
@@ -789,6 +878,7 @@ char* execute_tool(const char *tool_name, const char *arguments_json) {
             result = tool_write_file(filepath, content);
         } else {
             result = strdup("Error: Missing 'filepath' or 'content' parameter");
+            if (!result) result = NULL;
         }
     }
     else if (strcmp(tool_name, "list_dir") == 0) {
@@ -798,6 +888,7 @@ char* execute_tool(const char *tool_name, const char *arguments_json) {
             result = tool_list_dir(dirpath);
         } else {
             result = strdup("Error: Missing 'dirpath' parameter");
+            if (!result) result = NULL;
         }
     }
     else if (strcmp(tool_name, "bash") == 0) {
@@ -807,11 +898,14 @@ char* execute_tool(const char *tool_name, const char *arguments_json) {
             result = tool_bash_command(command);
         } else {
             result = strdup("Error: Missing 'command' parameter");
+            if (!result) result = NULL;
         }
     }
     else {
         result = malloc(ERROR_MSG_SIZE);
-        snprintf(result, ERROR_MSG_SIZE, "Error: Unknown tool '%s'", tool_name);
+        if (result) {
+            snprintf(result, ERROR_MSG_SIZE, "Error: Unknown tool '%s'", tool_name);
+        }
     }
     
     json_object_put(args);
