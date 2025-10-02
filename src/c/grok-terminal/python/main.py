@@ -245,7 +245,28 @@ def tool_pip(arguments: Dict[str, Any]) -> str:
         return "Error: Missing 'args' parameter"
     return execute_bash_command(f"pip3 {args}")
 
-# OpenAI-compatible tool definitions for the AI model
+def tool_intellij(arguments: Dict[str, Any]) -> str:
+    """Execute IntelliJ IDEA MCP server tools.
+
+    Args:
+        arguments: Dict containing 'action' parameter and optional 'arguments' dict
+
+    Returns:
+        str: Result of IntelliJ tool execution or error message
+    """
+    action = arguments.get("action")
+    if not action:
+        return "Error: Missing 'action' parameter"
+    args = arguments.get("arguments", {})
+    try:
+        # Run the intellij_tool.py script with the action and arguments
+        cmd = ["python3", "intellij_tool.py", action, json.dumps(args)]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        return result.stdout.strip() or result.stderr.strip()
+    except subprocess.TimeoutExpired:
+        return "Tool execution timed out after 60 seconds."
+    except Exception as e:
+        return f"Error executing IntelliJ tool: {str(e)}"# OpenAI-compatible tool definitions for the AI model
 # These define the available functions the AI can call during conversations
 TOOLS = [
     {
@@ -375,8 +396,21 @@ TOOLS = [
             },
         },
     },
-]
-
+    {
+        "type": "function",
+        "function": {
+            "name": "intellij",
+            "description": "Execute IntelliJ IDEA MCP server tools",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "action": {"type": "string", "description": "Action to perform (e.g., 'list_tools', 'call_tool')"},
+                    "arguments": {"type": "object", "description": "Optional arguments for the action"},
+                },
+                "required": ["action"],
+            },
+        },
+    }]
 # Mapping of tool names to their executor functions
 # Used to dispatch tool calls to the appropriate Python functions
 TOOL_EXECUTORS = {
@@ -389,7 +423,7 @@ TOOL_EXECUTORS = {
     "gh": tool_gh,
     "python": tool_python,
     "pip": tool_pip,
-}
+    "intellij": tool_intellij,}
 
 def execute_tool(tool_call: Dict[str, Any]) -> str:
     """Execute a tool call by dispatching to the appropriate function.
@@ -487,7 +521,7 @@ def main():
     print("=== Grok Terminal ===")
     print(f"Connected to xAI API (model: {MODEL})")
     print("Type 'exit' to quit, or enter your message.")
-    print("The AI can use tools: read_file, write_file, list_dir, bash, git, brew, gh, python, pip.")
+    print("The AI can use tools: read_file, write_file, list_dir, bash, git, brew, gh, python, pip, intellij.")
     print("Type 'stop' during AI response to interrupt it.")
     print("")
 
