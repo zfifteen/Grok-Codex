@@ -423,7 +423,8 @@ TOOL_EXECUTORS = {
     "gh": tool_gh,
     "python": tool_python,
     "pip": tool_pip,
-    "intellij": tool_intellij,}
+    "intellij": tool_intellij
+}
 
 def execute_tool(tool_call: Dict[str, Any]) -> str:
     """Execute a tool call by dispatching to the appropriate function.
