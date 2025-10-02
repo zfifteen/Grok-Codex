@@ -1,0 +1,19 @@
+{
+  "": {
+    "swift-dependencies": "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/.build/arm64-apple-macosx/debug/GrokUIDemo.build/master.swiftdeps"
+  },
+  "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/Sources/GrokUIDemo/ContentView.swift": {
+    "dependencies": "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/.build/arm64-apple-macosx/debug/GrokUIDemo.build/ContentView.d",
+    "object": "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/.build/arm64-apple-macosx/debug/GrokUIDemo.build/ContentView.swift.o",
+    "swiftmodule": "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/.build/arm64-apple-macosx/debug/GrokUIDemo.build/ContentView~partial.swiftmodule",
+    "swift-dependencies": "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/.build/arm64-apple-macosx/debug/GrokUIDemo.build/ContentView.swiftdeps",
+    "diagnostics": "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/.build/arm64-apple-macosx/debug/GrokUIDemo.build/ContentView.dia"
+  },
+  "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/Sources/GrokUIDemo/GrokUIDemoApp.swift": {
+    "dependencies": "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/.build/arm64-apple-macosx/debug/GrokUIDemo.build/GrokUIDemoApp.d",
+    "object": "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/.build/arm64-apple-macosx/debug/GrokUIDemo.build/GrokUIDemoApp.swift.o",
+    "swiftmodule": "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/.build/arm64-apple-macosx/debug/GrokUIDemo.build/GrokUIDemoApp~partial.swiftmodule",
+    "swift-dependencies": "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/.build/arm64-apple-macosx/debug/GrokUIDemo.build/GrokUIDemoApp.swiftdeps",
+    "diagnostics": "/Users/velocityworks/IdeaProjects/Grok-Codex/src/c/grok-terminal/python/GrokUIDemo/.build/arm64-apple-macosx/debug/GrokUIDemo.build/GrokUIDemoApp.dia"
+  }
+}
