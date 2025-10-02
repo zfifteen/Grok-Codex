@@ -7,9 +7,98 @@ import select
 import subprocess
 import sys
 import signal
+import time
 from typing import List, Dict, Any
 
 from openai import OpenAI  # Using OpenAI client for xAI API compatibility
+
+
+# ---- Paste-friendly input helper (aggressive drain) ----
+def _read_collapsed_stdin_line():
+    """
+    Read a user line from stdin, but collapse any immediately-pasted multi-line
+    content into a single line by draining the input buffer for a short window.
+    Also strips bracketed-paste markers (\x1b[200~ ... \x1b[201~).
+    """
+    # 1) Get the first line (blocking)
+    try:
+        first = sys.stdin.readline()
+    except Exception:
+        return ""
+    if first == "":
+        return ""
+
+    data = first
+
+    # 2) Aggressively drain any remaining pasted content with a short time window
+    #    Temporarily set stdin non-blocking and read until no data arrives
+    #    for ~750ms, extending briefly when new data arrives.
+    try:
+        fd = sys.stdin.fileno()
+        try:
+            prev_blocking = os.get_blocking(fd)  # Python 3.11+, ok if unavailable
+        except Exception:
+            prev_blocking = None
+
+        try:
+            if prev_blocking is not None:
+                os.set_blocking(fd, False)
+            deadline = time.time() + 0.75  # collect for up to ~750ms
+            extend = 0.10                  # extend briefly when data arrives
+            buf = []
+            while True:
+                try:
+                    rlist, _, _ = select.select([sys.stdin], [], [], 0.0)
+                except Exception:
+                    rlist = []
+                if rlist:
+                    try:
+                        more = sys.stdin.read()
+                    except Exception:
+                        try:
+                            more = sys.stdin.readline()
+                        except Exception:
+                            more = ""
+                    if more:
+                        buf.append(more)
+                        # extend deadline to catch tail of paste
+                        deadline = time.time() + extend
+                else:
+                    if time.time() < deadline:
+                        try:
+                            import time as _t
+                            _t.sleep(0.01)
+                        except Exception:
+                            pass
+                        continue
+                    break
+            if buf:
+                data += "".join(buf)
+        finally:
+            if prev_blocking is not None:
+                try:
+                    os.set_blocking(fd, prev_blocking)
+                except Exception:
+                    pass
+    except Exception:
+        # Fallback: ignore draining errors and proceed with what we have
+        pass
+
+    # 3) Remove bracketed-paste markers
+    data = data.replace("\x1b[200~", "").replace("\x1b[201~", "")
+
+    # 4) Collapse all newline variants into single spaces and normalize spaces
+    data = data.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+    data = " ".join(data.split())
+    return data.strip()
+# --------------------------------------------------------
+
+
+
+
+
+
+
 
 # xAI API configuration
 API_BASE_URL = "https://api.x.ai/v1"
@@ -539,7 +628,7 @@ def main():
             # Get user input
             sys.stdout.write("> ")
             sys.stdout.flush()
-            user_input = sys.stdin.readline().strip()
+            user_input = _read_collapsed_stdin_line()
             if not user_input:
                 continue
             if user_input.lower() == "exit":
