@@ -6,6 +6,7 @@ import os
 import select
 import subprocess
 import sys
+import signal
 from typing import List, Dict, Any
 
 from openai import OpenAI  # Using OpenAI client for xAI API compatibility
@@ -87,8 +88,12 @@ def execute_bash_command(command: str) -> str:
             stderr=subprocess.PIPE,
             text=True
         )
-        stdout, stderr = process.communicate()
-        exit_code = process.returncode
+        try:
+            stdout, stderr = process.communicate(timeout=60)
+            exit_code = process.returncode
+        except subprocess.TimeoutExpired:
+            process.kill()
+            return "Tool execution timed out after 60 seconds. Please try a different approach or request a longer timeout if necessary."
 
         # Combine stdout and stderr, including stderr only if present
         output = stdout.strip() + "\n" + stderr.strip() if stderr else stdout.strip()
