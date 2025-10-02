@@ -15,7 +15,7 @@ from openai import OpenAI  # Using OpenAI client for xAI API compatibility
 API_BASE_URL = "https://api.x.ai/v1"
 MODEL = "grok-code-fast-1"  # Fast coding-focused Grok model
 
-SYSTEM_INSTRUCTION = """Agent Mode
+SYSTEM_INSTRUCTION_BASE = """Agent Mode
 Core Identity:
 - Name: Grok Coding Agent
 - Archetype: Systems-native coding companion with research augmentation
@@ -468,6 +468,20 @@ def main():
     MAX_HISTORY = 5
     CONTEXT_DIR = os.path.expanduser("~/.grok-terminal")
     CONTEXT_FILE = os.path.join(CONTEXT_DIR, "context.json")
+
+    # Load MCP server configuration if available
+    mcp_config_file = os.path.join(CONTEXT_DIR, "jetbrains_mcp_server.json")
+    mcp_config_content = ""
+    if os.path.exists(mcp_config_file):
+        try:
+            with open(mcp_config_file, "r") as f:
+                mcp_config = json.load(f)
+            mcp_config_content = f"\n\nMCP Server Configuration (from {mcp_config_file}):\n{json.dumps(mcp_config, indent=2)}"
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"Warning: Failed to load MCP config from {mcp_config_file}: {e}")
+    
+    # Build system instruction with optional MCP config
+    SYSTEM_INSTRUCTION = SYSTEM_INSTRUCTION_BASE + mcp_config_content
 
     # Display startup information
     print("=== Grok Terminal ===")
