@@ -16,7 +16,7 @@ void generate_random_prime(mpz_t prime, gmp_randstate_t state, int bits) {
         mpz_urandomb(rand_num, state, bits - 1);
         mpz_setbit(rand_num, bits - 1);  // Ensure it's at least 2^(bits-1)
         mpz_nextprime(prime, rand_num);
-    } while (mpz_sizeinbase(prime, 2) > bits);  // Cap at bits
+    } while ((int)mpz_sizeinbase(prime, 2) > bits);  // Cap at bits (cast to avoid warning)
     mpz_clear(rand_num);
 }
 

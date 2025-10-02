@@ -3,7 +3,7 @@
 # Deps from parent /src/c/Makefile (MPFR/GMP/OpenSSL)
 
 CC = clang
-CFLAGS = -Wall -Wextra -Wno-deprecated-declarations -O2 -std=c99 -fopenmp
+CFLAGS = -Wall -Wextra -Wno-deprecated-declarations -O2 -std=c99 -Xpreprocessor -fopenmp
 OPENSSL_PREFIX = $(shell brew --prefix openssl 2>/dev/null || echo "/usr/local/opt/openssl")
 GMP_PREFIX = $(shell brew --prefix gmp 2>/dev/null || echo "/usr/local/opt/gmp")
 MPFR_PREFIX = $(shell brew --prefix mpfr 2>/dev/null || echo "/usr/local/opt/mpfr")
