@@ -1,14 +1,32 @@
 # Authentication
 
-## Usage-based billing alternative: Use an OpenAI API key
+Grok CLI supports multiple authentication methods depending on your chosen AI provider.
 
-If you prefer to pay-as-you-go, you can still authenticate with your OpenAI API key:
+## xAI Authentication
+
+To use xAI's Grok models, set your xAI API key as an environment variable:
+
+```shell
+export XAI_API_KEY="your-xai-api-key-here"
+```
+
+Then configure your `~/.codex/config.toml` to use the xAI provider. See the [xAI Configuration Guide](./xai_configuration.md) for complete setup instructions.
+
+## OpenAI Authentication
+
+### Using an OpenAI API key
+
+If you prefer to use OpenAI with pay-as-you-go billing, you can authenticate with your OpenAI API key:
 
 ```shell
 codex login --api-key "your-api-key-here"
 ```
 
 This key must, at minimum, have write access to the Responses API.
+
+### Using ChatGPT login
+
+Run `codex` and select **Sign in with ChatGPT** to use your ChatGPT Plus, Pro, Team, Edu, or Enterprise plan.
 
 ## Migrating to ChatGPT login from API key
 

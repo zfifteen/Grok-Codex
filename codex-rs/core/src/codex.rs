@@ -1585,10 +1585,10 @@ pub(crate) async fn run_task(
         //   model sees a fresh conversation (no parent history/user_instructions).
         //
         // - For normal turns, use the session's full history. When using the
-        //   chat completions API (or ZDR clients), the model needs the full
-        //   conversation history on each turn. The rollout file, however, should
-        //   only record the new items that originated in this turn so that it
-        //   represents an append-only log without duplicates.
+        //   chat completions API, the model needs the full conversation history
+        //   on each turn. The rollout file, however, should only record the new
+        //   items that originated in this turn so that it represents an
+        //   append-only log without duplicates.
         let turn_input: Vec<ResponseItem> = if is_review_mode {
             if !pending_input.is_empty() {
                 review_thread_history.extend(pending_input);

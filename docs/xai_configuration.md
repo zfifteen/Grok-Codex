@@ -1,15 +1,15 @@
 # xAI Configuration Guide
 
-This document describes how to configure Codex to work with xAI's API endpoints at `https://api.x.ai`.
+This document describes how to configure Grok CLI to work with xAI's API endpoints at `https://api.x.ai`.
 
 ## Overview
 
-xAI provides OpenAI-compatible endpoints that can be used with Codex by adding a custom provider configuration. The xAI API uses the same Chat Completions format as OpenAI, making integration straightforward.
+xAI provides OpenAI-compatible endpoints that can be used with Grok CLI by adding a custom provider configuration. The xAI API uses the same Chat Completions format as OpenAI, making integration straightforward.
 
 ## Prerequisites
 
 1. An xAI API key from [xAI Console](https://console.x.ai)
-2. Codex CLI installed and configured
+2. Grok CLI installed (`npm install -g @zfifteen/grok`)
 
 ## Configuration
 
@@ -41,24 +41,26 @@ request_max_retries = 4
 stream_max_retries = 10
 ```
 
-### Step 3: Run Codex
+### Step 3: Run Grok CLI
 
-Now you can run Codex with the xAI provider:
+Now you can run Grok CLI with the xAI provider:
 
 ```bash
-codex --provider api_x
+grok --provider api_x
 ```
 
 Or specify it directly in your config file and run:
 
 ```bash
-codex
+grok
 ```
+
+**Note:** If you're developing or running from source, the binary is called `codex` directly from the cargo workspace.
 
 ## Available Models
 
 Common xAI models include:
-- `grok-code-fast-1` - Fast coding model (recommended for Codex)
+- `grok-code-fast-1` - Fast coding model (recommended for Grok CLI)
 - `grok-2-1212` - General purpose model
 - `grok-2-vision-1212` - Vision-capable model
 
@@ -201,8 +203,8 @@ model_provider = "api_x"
 Then use them with:
 
 ```bash
-codex --profile grok-fast
-codex --profile grok-vision
+grok --profile grok-fast
+grok --profile grok-vision
 ```
 
 ## Support
@@ -211,6 +213,6 @@ For xAI-specific issues:
 - Check [xAI Documentation](https://docs.x.ai/docs)
 - Contact xAI Support
 
-For Codex configuration issues:
-- Check the main [Codex Documentation](../README.md)
+For Grok CLI configuration issues:
+- Check the main [Grok CLI Documentation](../README.md)
 - Review the [Configuration Guide](config.md)
